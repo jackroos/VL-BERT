@@ -1,0 +1,129 @@
+---
+RNG_SEED: 12345
+OUTPUT_PATH: './output/vl-bert/vcr'
+MODULE: ResNetVLBERT
+GPUS: '0,1,2,3'
+LOG_FREQUENT: 100
+VAL_FREQUENT: 1
+CHECKPOINT_FREQUENT: 1
+MODEL_PREFIX: 'vl-bert_large_a_res101'
+NUM_WORKERS_PER_GPU: 4
+SCALES:
+- 600
+- 1200
+
+DATASET:
+  DATASET: vcr
+  LABEL_INDEX_IN_BATCH: 7
+  APPEND_INDEX: false
+  TASK: 'Q2A'
+  BASIC_ALIGN: false
+  DATASET_PATH: './data/vcr'
+  ROOT_PATH: './'
+  TRAIN_IMAGE_SET: 'vcr1images'
+  VAL_IMAGE_SET: 'vcr1images'
+  TEST_IMAGE_SET: 'vcr1images'
+  TRAIN_ANNOTATION_FILE: 'train.jsonl'
+  VAL_ANNOTATION_FILE: 'val.jsonl'
+  TEST_ANNOTATION_FILE: 'test.jsonl'
+  ONLY_USE_RELEVANT_DETS: false
+  ADD_IMAGE_AS_A_BOX: true
+  ZIP_MODE: false
+  CACHE_MODE: false
+  IGNORE_DB_CACHE: true
+  MASK_SIZE: 14
+
+NETWORK:
+  PARTIAL_PRETRAIN: "./model/pretrained_model/vl-bert-large-e2e.model"
+  PARTIAL_PRETRAIN_PREFIX_CHANGES:
+  - "vlbert.mvrc_head.transform->cnn_loss_reg.0"
+  - "module.vlbert.mvrc_head.transform->module.cnn_loss_reg.0"
+  - "module.vlbert->module.vlbert._module"
+  - "vlbert->vlbert._module"
+  PARTIAL_PRETRAIN_SEGMB_INIT: true
+  IMAGE_NUM_LAYERS: 101
+  IMAGE_C5_DILATED: true
+  IMAGE_STRIDE_IN_1x1: true
+  PIXEL_MEANS:
+  - 102.9801
+  - 115.9465
+  - 122.7717
+  PIXEL_STDS:
+  - 1.0
+  - 1.0
+  - 1.0
+  IMAGE_PRETRAINED: './model/pretrained_model/resnet101-pt-vgbua'
+  IMAGE_PRETRAINED_EPOCH: 0
+  IMAGE_FROZEN_BACKBONE_STAGES:
+  - 1
+  - 2
+  IMAGE_FROZEN_BN: true
+  IMAGE_FINAL_DIM: 1024
+  IMAGE_SEMANTIC: false
+  OUTPUT_CONV5: false
+  BERT_MODEL_NAME: './model/pretrained_model/bert-large-uncased'
+  BERT_PRETRAINED: ''
+  BERT_PRETRAINED_EPOCH: 0
+  BERT_FROZEN: false
+  ENABLE_CNN_REG_LOSS: true
+  ANS_LOSS_WEIGHT: 1.0
+  CNN_LOSS_TOP: true
+
+  VLBERT:
+    input_transform_type: 1
+    visual_size: 1024
+    hidden_size: 1024
+    num_hidden_layers: 24
+    num_attention_heads: 16
+    intermediate_size: 4096
+    hidden_act: "gelu"
+    hidden_dropout_prob: 0.1
+    attention_probs_dropout_prob: 0.1
+    max_position_embeddings: 512
+    type_vocab_size: 3
+    vocab_size: 30522
+    initializer_range: 0.02
+    visual_scale_text_init: 0.0
+    visual_scale_object_init: 0.0
+    visual_ln: true
+    object_word_embed_mode: 2
+
+  CLASSIFIER_TYPE: "1fc"
+  CLASSIFIER_HIDDEN_SIZE: 1024
+  CLASSIFIER_DROPOUT: 0.1
+  CLASSIFIER_SIGMOID: true
+
+TRAIN:
+  SHUFFLE: true
+  FLIP_PROB: 0.5
+  BATCH_IMAGES: 4
+  ASPECT_GROUPING: false
+  RESUME: false
+  AUTO_RESUME: true
+  BEGIN_EPOCH: 0
+  END_EPOCH: 20
+  OPTIMIZER: 'SGD'
+  CLIP_GRAD_NORM: 10
+  GRAD_ACCUMULATE_STEPS: 4
+  LR_FACTOR: 0.1
+  LR_STEP: "14,18"
+  LR: 7.0e-5
+  WD: 0.0001
+  WARMUP: true
+  WARMUP_METHOD: 'linear'
+  WARMUP_FACTOR: 0.0
+  WARMUP_STEPS: 1000
+  MOMENTUM: 0.9
+  FP16: true
+  FP16_LOSS_SCALE: 'dynamic'
+
+VAL:
+  SHUFFLE: false
+  FLIP_PROB: 0
+  BATCH_IMAGES: 4
+
+TEST:
+  SHUFFLE: false
+  FLIP_PROB: 0
+  TEST_EPOCH: 0
+  BATCH_IMAGES: 4

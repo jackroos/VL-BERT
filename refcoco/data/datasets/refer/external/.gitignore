@@ -1,0 +1,3 @@
+*.pyc
+_mask.so
+_mask.c

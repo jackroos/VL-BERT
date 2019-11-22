@@ -1,0 +1,3 @@
+from .resnet_vlbert_for_pretraining import ResNetVLBERTForPretraining
+from .resnet_vlbert_for_pretraining_multitask import ResNetVLBERTForPretrainingMultitask
+
