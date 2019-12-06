@@ -56,8 +56,8 @@
    
    3) Download pretrained model (https://www.dropbox.com/s/wqada4qiv1dz9dk/resnet101_faster_rcnn_final.caffemodel?dl=1), and put it under data/faster_rcnn_models.
    
-9. python ./tools/generate_tsv_v2.py --gpu 0,1,2,3,4,5,6,7 --cfg experiments/cfgs/faster_rcnn_end2end_resnet.yml --def models/vg/ResNet-101/faster_rcnn_end2end/test.prototxt --net data/faster_rcnn_models/resnet101_faster_rcnn_final.caffemodel --split conceptual_captions_train --data_root {Conceptual_Captions_Root} --out {Conceptual_Captions_Root}/train_frcnn/
+9. python ./tools/generate_tsv_v2.py --gpu 0,1,2,3,4,5,6,7 --cfg experiments/cfgs/faster_rcnn_end2end_resnet.yml --def models/vg/ResNet-101/faster_rcnn_end2end_final/test.prototxt --net data/faster_rcnn_models/resnet101_faster_rcnn_final.caffemodel --split conceptual_captions_train --data_root {Conceptual_Captions_Root} --out {Conceptual_Captions_Root}/train_frcnn/
 
-   python ./tools/generate_tsv_v2.py --gpu 0,1,2,3,4,5,6,7 --cfg experiments/cfgs/faster_rcnn_end2end_resnet.yml --def models/vg/ResNet-101/faster_rcnn_end2end/test.prototxt --net data/faster_rcnn_models/resnet101_faster_rcnn_final.caffemodel --split conceptual_captions_val --data_root {Conceptual_Captions_Root} --out {Conceptual_Captions_Root}/val_frcnn/
+   python ./tools/generate_tsv_v2.py --gpu 0,1,2,3,4,5,6,7 --cfg experiments/cfgs/faster_rcnn_end2end_resnet.yml --def models/vg/ResNet-101/faster_rcnn_end2end_final/test.prototxt --net data/faster_rcnn_models/resnet101_faster_rcnn_final.caffemodel --split conceptual_captions_val --data_root {Conceptual_Captions_Root} --out {Conceptual_Captions_Root}/val_frcnn/
    
 10. zip (without compression) "train_frcnn" and "val_frcnn" similar to step 6.
