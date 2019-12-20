@@ -12,6 +12,9 @@ By
 This repository is official implementation of the paper 
 [VL-BERT: Pre-training of Generic Visual-Linguistic Representations](https://arxiv.org/abs/1908.08530).
 
+*Update on 2019/12/20*
+Our VL-BERT got accepted by ICLR 2020.
+
 ## Introduction
 
 VL-BERT is a simple yet powerful pre-trainable generic representation for visual-linguistic tasks. 
