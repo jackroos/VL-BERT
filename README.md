@@ -35,9 +35,8 @@ Thanks to PyTorch and its 3rd-party libraries, this codebase also contains follo
 
 ## Citing VL-BERT
 ```bibtex
-@inproceedings{
-  su2020vlbert,
-  title={{\{}VL{\}}-{\{}BERT{\}}: Pre-training of Generic Visual-Linguistic Representations},
+@inproceedings{su2020vlbert,
+  title={{VL-BERT}: Pre-training of Generic Visual-Linguistic Representations},
   author={Weijie Su and Xizhou Zhu and Yue Cao and Bin Li and Lewei Lu and Furu Wei and Jifeng Dai},
   booktitle={International Conference on Learning Representations},
   year={2020},
