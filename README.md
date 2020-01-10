@@ -46,7 +46,7 @@ Thanks to PyTorch and its 3rd-party libraries, this codebase also contains follo
 ## Prepare
 
 ### Environment
-* Ubuntu 16.04, CUDA 9.0
+* Ubuntu 16.04, CUDA 9.0, GCC 4.9.4
 * Python 3.6.x
     ```bash
     # We recommend you to use Anaconda/Miniconda to create a conda environment
