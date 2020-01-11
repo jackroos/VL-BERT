@@ -174,6 +174,9 @@ non-distributed training to solve this problem.
     --result-path <dir_to_save_result> --result-name <result_file_name>
   ```
 
+## Visualization
+*Coming soon!*
+
 ## Acknowledgements
 
 Many thanks to following codes that help us a lot in building this codebase:
