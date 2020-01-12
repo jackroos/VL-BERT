@@ -65,6 +65,7 @@ Thanks to PyTorch and its 3rd-party libraries, this codebase also contains follo
     ```
 * Other requirements:
     ```bash
+    pip install Cython
     pip install -r requirements.txt
     ```
 * Compile
