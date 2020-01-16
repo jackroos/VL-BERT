@@ -14,14 +14,11 @@ This repository is official implementation of the paper
 
 
 
-*Updata on 2020/01/16*
-
-Add code of visualization.
+*Updata on 2020/01/16* Add code of visualization.
 
 
 
-*Update on 2019/12/20*
-Our VL-BERT got accepted by ICLR 2020.
+*Update on 2019/12/20* Our VL-BERT got accepted by ICLR 2020.
 
 ## Introduction
 
