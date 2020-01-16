@@ -12,6 +12,14 @@ By
 This repository is official implementation of the paper 
 [VL-BERT: Pre-training of Generic Visual-Linguistic Representations](https://arxiv.org/abs/1908.08530).
 
+
+
+*Updata on 2020/01/16*
+
+Add code of visualization.
+
+
+
 *Update on 2019/12/20*
 Our VL-BERT got accepted by ICLR 2020.
 
@@ -94,7 +102,7 @@ See [PREPARE_PRETRAINED_MODELS.md](model/pretrained_model/PREPARE_PRETRAINED_MOD
 * ```<task>```: pretrain/vcr/vqa/refcoco.
 * ```<path_to_cfg>```: config yaml file under ```./cfgs/<task>```.
 * ```<dir_to_store_checkpoint>```: root directory to store checkpoints.
- 
+
 
 Following is a more concrete example:
 ```
@@ -176,7 +184,7 @@ non-distributed training to solve this problem.
   ```
 
 ## Visualization
-*Coming soon!*
+See [VISUALIZATION.md](./viz/VISUALIZATION.md).
 
 ## Acknowledgements
 
@@ -190,3 +198,4 @@ Many thanks to following codes that help us a lot in building this codebase:
 * [bottom-up-attention](https://github.com/peteanderson80/bottom-up-attention)
 * [pythia](https://github.com/facebookresearch/pythia)
 * [MAttNet](https://github.com/lichengunc/MAttNet)
+* [bertviz](https://github.com/jessevig/bertviz)
