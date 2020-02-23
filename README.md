@@ -9,12 +9,12 @@ By
 [Furu Wei](http://mindio.org/), 
 [Jifeng Dai](https://jifengdai.org/).
 
-This repository is official implementation of the paper 
+This repository is an official implementation of the paper 
 [VL-BERT: Pre-training of Generic Visual-Linguistic Representations](https://arxiv.org/abs/1908.08530).
 
 
 
-*Updata on 2020/01/16* Add code of visualization.
+*Update on 2020/01/16* Add code of visualization.
 
 
 
