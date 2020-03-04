@@ -21,7 +21,11 @@ The code is based on [bertviz](https://github.com/jessevig/bertviz), a nice tool
 * (Optional) Download pre-trained models as described in [PREPARE_PRETRAINED_MODELS.md](../model/pretrained_model/PREPARE_PRETRAINED_MODELS.md), if you want to precompute all attention maps by yourself.
 
 ## Pre-compute attention maps
-* Pre-computing all attention maps on COCO val2017: *Coming Soon!*
+* Pre-computing all attention maps on COCO val2017: 
+  
+  ```bash
+  python pretrain/vis_attention_maps.py --cfg cfgs/pretrain/vis_attention_maps_coco.yaml --save-dir ./vl-bert_viz
+  ```
 * We provide 100 pre-computed attention maps of vl-bert-base-e2e on COCO val2017: [GoogleDrive](https://drive.google.com/file/d/1TFfqArX3lwOPQ8EklZ6px5-gvOvoGdTr/view?usp=sharing) [BaiduPan](https://pan.baidu.com/s/1l0T5vAuklQTrAmD3wbJ7uQ), please download and unzip it into ```./data```.
 
 ## Visualization on Jupyter Notebook
