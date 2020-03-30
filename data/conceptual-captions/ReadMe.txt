@@ -37,7 +37,7 @@
    python gen_val_image_json.py
    
    
-8. git clone https://github.com/einsiedler0408/bottom-up-attention and follow "Installation" :
+8. git clone https://github.com/jackroos/bottom-up-attention and follow "Installation" :
 
    1) Build the Cython modules
 
