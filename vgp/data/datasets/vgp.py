@@ -200,3 +200,18 @@ class VGPDataset(Dataset):
             data_names = ['image', 'boxes', 'sentence1', 'sentence2', 'im_info']
 
         return data_names
+
+
+def test_vgp():
+    paraphrase_file = "full_data_type_phrase_pair_train.csv"
+    image_set = "flickr30k-images"
+    roi_set = "Annotations"
+    root_path = ""
+    data_path = os.path.join("../../../../data/vgp")
+    dataset = VGPDataset(full_sentences_file="", paraphrase_file=paraphrase_file, roi_set=roi_set, root_path=root_path,
+                         data_path=data_path)
+    print(len(dataset.__getitem__(0)))
+
+
+if __name__ == "__main__":
+    test_vgp()
