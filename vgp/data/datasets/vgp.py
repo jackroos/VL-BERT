@@ -25,7 +25,7 @@ from common.nlp.roberta import RobertaTokenizer
 
 
 class VGPDataset(Dataset):
-    def __init__(self, full_sentences_file, ann_file, roi_set, image_set, root_path, data_path, transform=None,
+    def __init__(self, full_sentences_set, ann_file, roi_set, image_set, root_path, data_path, transform=None,
                  test_mode=False, zip_mode=False, cache_mode=False, cache_db=False, ignore_db_cache=True,
                  basic_tokenizer=None, tokenizer=None, pretrained_model_name=None, add_image_as_a_box=False, **kwargs):
         """
@@ -49,7 +49,7 @@ class VGPDataset(Dataset):
 
         self.data_path = data_path
         self.root_path = root_path
-        self.full_sentences_file = os.path.join(data_path, full_sentences_file)
+        self.full_sentences_set = os.path.join(data_path, full_sentences_set)
         self.ann_file = os.path.join(data_path, ann_file)
         self.roi_set = os.path.join(data_path, roi_set)
         self.image_set = os.path.join(self.data_path, image_set)
@@ -208,7 +208,7 @@ def test_vgp():
     roi_set = "Annotations"
     root_path = ""
     data_path = os.path.join(os.getcwd(), "data/vgp/")
-    dataset = VGPDataset(full_sentences_file="", ann_file=ann_file, roi_set=roi_set, image_set=image_set, root_path=root_path,
+    dataset = VGPDataset(full_sentences_set="", ann_file=ann_file, roi_set=roi_set, image_set=image_set, root_path=root_path,
                          data_path=data_path)
     print(len(dataset.__getitem__(0)))
 

@@ -42,21 +42,18 @@ def make_dataloader(cfg, dataset=None, mode='train', distributed=False, num_repl
     assert mode in ['train', 'val', 'test']
     if mode == 'train':
         ann_file = cfg.DATASET.TRAIN_ANNOTATION_FILE
-        image_set = cfg.DATASET.TRAIN_IMAGE_SET
         num_gpu = len(cfg.GPUS.split(','))
         batch_size = cfg.TRAIN.BATCH_IMAGES * num_gpu
         shuffle = cfg.TRAIN.SHUFFLE
         num_workers = cfg.NUM_WORKERS_PER_GPU * num_gpu
     elif mode == 'val':
         ann_file = cfg.DATASET.VAL_ANNOTATION_FILE
-        image_set = cfg.DATASET.VAL_IMAGE_SET
         num_gpu = len(cfg.GPUS.split(','))
         batch_size = cfg.VAL.BATCH_IMAGES * num_gpu
         shuffle = cfg.VAL.SHUFFLE
         num_workers = cfg.NUM_WORKERS_PER_GPU * num_gpu
     else:
         ann_file = cfg.DATASET.TEST_ANNOTATION_FILE
-        image_set = cfg.DATASET.TEST_IMAGE_SET
         num_gpu = len(cfg.GPUS.split(','))
         batch_size = cfg.TEST.BATCH_IMAGES * num_gpu
         shuffle = cfg.TEST.SHUFFLE
@@ -95,8 +92,8 @@ def make_dataloader(cfg, dataset=None, mode='train', distributed=False, num_repl
 
         print('Dataset kwargs:')
         pprint.pprint(kwargs)
-        dataset = build_dataset(dataset_name=cfg.DATASET.DATASET, full_sentences_file=cfg.DATASET.FULL_SENTENCES_FILE,
-                                ann_file=ann_file, roi_set=cfg.DATASET.ROI_SET, image_set=image_set,
+        dataset = build_dataset(dataset_name=cfg.DATASET.DATASET, full_sentences_set=cfg.DATASET.FULL_SENTENCES_SET,
+                                ann_file=ann_file, roi_set=cfg.DATASET.ROI_SET, image_set=cfg.DATASET.IMAGE_SET,
                                 root_path=cfg.DATASET.ROOT_PATH, data_path=cfg.DATASET.DATASET_PATH,
                                 transform=transform, test_mode=(mode == 'test'),  zip_mode=cfg.DATASET.ZIP_MODE,
                                 cache_mode=cfg.DATASET.CACHE_MODE, ignore_db_cache=cfg.DATASET.IGNORE_DB_CACHE,
