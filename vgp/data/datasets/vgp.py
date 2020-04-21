@@ -23,8 +23,6 @@ from common.utils.misc import block_digonal_matrix
 from common.nlp.misc import random_word_with_token_ids
 from common.nlp.roberta import RobertaTokenizer
 
-import pdb
-
 
 class VGPDataset(Dataset):
     def __init__(self, full_sentences_file, paraphrase_file, roi_set, image_set, root_path, data_path, transform=None,
