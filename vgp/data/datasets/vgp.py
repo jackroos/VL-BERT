@@ -25,13 +25,13 @@ from common.nlp.roberta import RobertaTokenizer
 
 
 class VGPDataset(Dataset):
-    def __init__(self, full_sentences_file, paraphrase_file, roi_set, image_set, root_path, data_path, transform=None,
+    def __init__(self, full_sentences_file, ann_file, roi_set, image_set, root_path, data_path, transform=None,
                  test_mode=False, zip_mode=False, cache_mode=False, cache_db=False, ignore_db_cache=True,
                  basic_tokenizer=None, tokenizer=None, pretrained_model_name=None, add_image_as_a_box=False, **kwargs):
         """
         Visual Grounded Paraphrase Dataset
 
-        :param ann_file: annotation jsonl file
+        :param ann_file: annotation csv file
         :param image_set: image folder name, e.g., 'vcr1images'
         :param root_path: root path to cache database loaded from annotation file
         :param data_path: path to vcr dataset
@@ -50,7 +50,7 @@ class VGPDataset(Dataset):
         self.data_path = data_path
         self.root_path = root_path
         self.full_sentences_file = os.path.join(data_path, full_sentences_file)
-        self.paraphrase_file = os.path.join(data_path, paraphrase_file)
+        self.ann_file = os.path.join(data_path, ann_file)
         self.roi_set = os.path.join(data_path, roi_set)
         self.image_set = os.path.join(self.data_path, image_set)
         self.transform = transform
@@ -77,9 +77,9 @@ class VGPDataset(Dataset):
         if zip_mode:
             self.zipreader = ZipReader()
 
-        self.database = self.load_phrases(self.paraphrase_file)
+        self.database = self.load_phrases(self.ann_file)
 
-    def load_phrases(self, paraphrase_file):
+    def load_phrases(self, ann_file):
         database = []
         db_cache_name = 'vgp_nometa'
         db_cache_root = os.path.join(self.root_path, 'cache')
@@ -98,11 +98,11 @@ class VGPDataset(Dataset):
                 print('cached database ignored.')
 
         # ignore or not find cached database, reload it from annotation file
-        print('loading database from {}...'.format(paraphrase_file))
+        print('loading database from {}...'.format(ann_file))
         tic = time.time()
 
         # open file in read mode
-        with open(paraphrase_file, 'r') as read_obj:
+        with open(ann_file, 'r') as read_obj:
             csv_reader = DictReader(read_obj)
             # Iterate over each row in the csv using reader object
             for paraph in csv_reader:
@@ -136,16 +136,16 @@ class VGPDataset(Dataset):
 
         # Format input text
         phrase1_tokens = self.tokenizer.tokenize(idb['phrase1'])
-        phrase1_ids = torch.as_tensor(self.tokenizer.convert_tokens_to_ids(phrase1_tokens)).unsqueeze(0)
+        phrase1_ids = torch.as_tensor(self.tokenizer.convert_tokens_to_ids(phrase1_tokens)).unsqueeze(1)
         phrase2_tokens = self.tokenizer.tokenize(idb['phrase2'])
-        phrase2_ids = torch.as_tensor(self.tokenizer.convert_tokens_to_ids(phrase2_tokens)).unsqueeze(0)
+        phrase2_ids = torch.as_tensor(self.tokenizer.convert_tokens_to_ids(phrase2_tokens)).unsqueeze(1)
 
         # Add mask to locate sub-phrases inside full sentence
         # For now full sentence is just the sub-phrase
         phrase1_mask = torch.ones_like(phrase1_ids)
         phrase2_mask = torch.ones_like(phrase2_ids)
-        sentence1 = torch.cat((phrase1_ids, phrase1_mask), dim=0)
-        sentence2 = torch.cat((phrase2_ids, phrase2_mask), dim=0)
+        sentence1 = torch.cat((phrase1_ids, phrase1_mask), dim=1)
+        sentence2 = torch.cat((phrase2_ids, phrase2_mask), dim=1)
 
         w0, h0 = image.size
 
@@ -168,7 +168,7 @@ class VGPDataset(Dataset):
         label = torch.as_tensor(int(idb['label'])) if not self.test_mode else None
 
         if not self.test_mode:
-            outputs = (image, boxes, sentence1, sentence2, label, im_info)
+            outputs = (image, boxes, sentence1, sentence2, im_info, label)
         else:
             outputs = (image, boxes, sentence1, sentence2, im_info)
 
@@ -195,7 +195,7 @@ class VGPDataset(Dataset):
     @property
     def data_names(self):
         if not self.test_mode:
-            data_names = ['image', 'boxes', 'sentence1', 'sentence2', 'label', 'im_info']
+            data_names = ['image', 'boxes', 'sentence1', 'sentence2', 'im_info', 'label']
         else:
             data_names = ['image', 'boxes', 'sentence1', 'sentence2', 'im_info']
 
@@ -203,12 +203,12 @@ class VGPDataset(Dataset):
 
 
 def test_vgp():
-    paraphrase_file = "full_data_type_phrase_pair_train.csv"
+    ann_file = "full_data_type_phrase_pair_train.csv"
     image_set = "flickr30k-images"
     roi_set = "Annotations"
     root_path = ""
     data_path = os.path.join(os.getcwd(), "data/vgp/")
-    dataset = VGPDataset(full_sentences_file="", paraphrase_file=paraphrase_file, roi_set=roi_set, image_set=image_set, root_path=root_path,
+    dataset = VGPDataset(full_sentences_file="", ann_file=ann_file, roi_set=roi_set, image_set=image_set, root_path=root_path,
                          data_path=data_path)
     print(len(dataset.__getitem__(0)))
 

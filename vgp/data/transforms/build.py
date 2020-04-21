@@ -26,7 +26,7 @@ def build_transforms(cfg, mode='train'):
             T.RandomHorizontalFlip(flip_prob),
             T.ToTensor(),
             normalize_transform,
-            T.FixPadding(min_size, max_size, pad=0)
+            # T.FixPadding(min_size, max_size, pad=0)
         ]
     )
     return transform

@@ -157,11 +157,8 @@ class ResNetVLBERT(Module):
                       masks,
                       sentence1,
                       sentence2,
-                      paraphrase_label,
                       im_info,
-                      mask_position=None,
-                      mask_type=None,
-                      mask_label=None):
+                      paraphrase_label):
         ###########################################
         # visual feature extraction
 
