@@ -3,8 +3,13 @@ import time
 import _pickle as cPickle
 from PIL import Image
 from copy import deepcopy
-from csv import reader
+from csv import DictReader
 import xml.etree.ElementTree as ET
+
+import sys
+root_path = os.path.abspath(os.getcwd())
+if root_path not in sys.path:
+    sys.path.append(root_path)
 
 import torch
 from torch.utils.data import Dataset
@@ -17,6 +22,8 @@ from common.nlp.misc import get_align_matrix
 from common.utils.misc import block_digonal_matrix
 from common.nlp.misc import random_word_with_token_ids
 from common.nlp.roberta import RobertaTokenizer
+
+import pdb
 
 
 class VGPDataset(Dataset):
@@ -98,13 +105,11 @@ class VGPDataset(Dataset):
 
         # open file in read mode
         with open(paraphrase_file, 'r') as read_obj:
-            # pass the file object to reader() to get the reader object
-            csv_reader = reader(read_obj)
+            csv_reader = DictReader(read_obj)
             # Iterate over each row in the csv using reader object
             for paraph in csv_reader:
-                img_id = paraph["image"]
                 db_i = {
-                    'img_id': img_id,
+                    'img_id': paraph["image"],
                     'phrase1': paraph['original_phrase1'],
                     'phrase2': paraph['original_phrase2'],
                     'label': paraph['type_label']
@@ -133,17 +138,16 @@ class VGPDataset(Dataset):
 
         # Format input text
         phrase1_tokens = self.tokenizer.tokenize(idb['phrase1'])
-        phrase1_ids = self.tokenizer.convert_tokens_to_ids(phrase1_tokens)
+        phrase1_ids = torch.as_tensor(self.tokenizer.convert_tokens_to_ids(phrase1_tokens)).unsqueeze(0)
         phrase2_tokens = self.tokenizer.tokenize(idb['phrase2'])
-        phrase2_ids = self.tokenizer.convert_tokens_to_ids(phrase2_tokens)
+        phrase2_ids = torch.as_tensor(self.tokenizer.convert_tokens_to_ids(phrase2_tokens)).unsqueeze(0)
 
         # Add mask to locate sub-phrases inside full sentence
         # For now full sentence is just the sub-phrase
-        phrase1_mask = torch.ones(len(phrase1_tokens), dtype=torch.uint8, device=phrase1_ids.device)
-        phrase2_mask = torch.ones(len(phrase2_tokens), dtype=torch.uint8, device=phrase2_ids.device)
-        sentence1 = torch.cat((phrase1_ids.unsqueeze(1), phrase1_mask), axis=1)
-        sentence2 = torch.cat((phrase2_ids.unsqueeze(1), phrase2_mask), axis=1)
-
+        phrase1_mask = torch.ones_like(phrase1_ids)
+        phrase2_mask = torch.ones_like(phrase2_ids)
+        sentence1 = torch.cat((phrase1_ids, phrase1_mask), dim=0)
+        sentence2 = torch.cat((phrase2_ids, phrase2_mask), dim=0)
 
         w0, h0 = image.size
 
@@ -152,20 +156,18 @@ class VGPDataset(Dataset):
         if self.add_image_as_a_box:
             image_box = torch.as_tensor([[0, 0, w0 - 1, h0 - 1]])
             boxes = torch.cat((image_box, boxes), dim=0)
-
+            
         # transform
         im_info = torch.tensor([w0, h0, 1.0, 1.0, index])
         if self.transform is not None:
             image, boxes, _, im_info = self.transform(image, boxes, None, im_info)
 
         # clamp boxes
-        w = im_info[0].item()
-        h = im_info[1].item()
-        boxes[:, [0, 2]] = boxes[:, [0, 2]].clamp(min=0, max=w - 1)
-        boxes[:, [1, 3]] = boxes[:, [1, 3]].clamp(min=0, max=h - 1)
+        boxes[:, [0, 2]] = boxes[:, [0, 2]].clamp(min=0, max=w0 - 1)
+        boxes[:, [1, 3]] = boxes[:, [1, 3]].clamp(min=0, max=h0 - 1)
 
         # Load label
-        label = torch.as_tensor(idb['label']) if not self.test_mode else None
+        label = torch.as_tensor(int(idb['label'])) if not self.test_mode else None
 
         if not self.test_mode:
             outputs = (image, boxes, sentence1, sentence2, label, im_info)
@@ -188,7 +190,7 @@ class VGPDataset(Dataset):
         root = parsed_tree.getroot()
         for obj in root[2:]:
             if obj[1].tag == 'bndbox':
-                dimensions = {obj[1][dim].tag: obj[1][dim].text for dim in range(4)}
+                dimensions = {obj[1][dim].tag: int(obj[1][dim].text) for dim in range(4)}
                 boxes.append([dimensions['xmin'], dimensions['ymin'], dimensions['xmax'], dimensions['ymax']])
         return boxes
 
@@ -207,8 +209,8 @@ def test_vgp():
     image_set = "flickr30k-images"
     roi_set = "Annotations"
     root_path = ""
-    data_path = os.path.join("../../../../data/vgp")
-    dataset = VGPDataset(full_sentences_file="", paraphrase_file=paraphrase_file, roi_set=roi_set, root_path=root_path,
+    data_path = os.path.join(os.getcwd(), "data/vgp/")
+    dataset = VGPDataset(full_sentences_file="", paraphrase_file=paraphrase_file, roi_set=roi_set, image_set=image_set, root_path=root_path,
                          data_path=data_path)
     print(len(dataset.__getitem__(0)))
 
