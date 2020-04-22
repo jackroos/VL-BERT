@@ -2,6 +2,11 @@ import os
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
+import sys
+root_path = os.path.abspath(os.getcwd())
+if root_path not in sys.path:
+    sys.path.append(root_path)
 from external.pytorch_pretrained_bert import BertTokenizer
 from common.module import Module
 from common.fast_rcnn import FastRCNN
@@ -367,3 +372,19 @@ class ResNetVLBERT(Module):
 
         return outputs
 
+def test_module():
+    from vgp.function.config import config, update_config
+    from vgp.data.build import make_dataloader
+    import pdb
+    cfg_path = os.path.join(root_path, 'cfgs', 'vgp', 'base_4x16G_fp32.yaml')
+    update_config(cfg_path)
+    dataloader = make_dataloader(config, dataset=None, mode='train')
+    module = ResNetVLBERT(config)
+    for batch in dataloader:
+        print(len(batch))
+        pdb.set_trace()
+        outputs, loss = module(batch)
+
+
+if __name__ == '__main__':
+    test_module()
