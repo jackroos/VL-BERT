@@ -114,3 +114,19 @@ def make_dataloader(cfg, dataset=None, mode='train', distributed=False, num_repl
         return dataloader, sampler
 
     return dataloader
+
+
+def test_dataloader():
+    import os
+    import pdb
+    from vgp.function.config import config, update_config
+    cfg_path = os.path.join('cfgs', 'vgp', 'base_4x16G_fp32.yaml')
+    update_config(cfg_path)
+    dataloader = make_dataloader(config, dataset=None, mode='train')
+    for batch in dataloader:
+        pdb.set_trace()
+        print(len(batch))
+
+
+if __name__ == '__main__':
+    test_dataloader()
