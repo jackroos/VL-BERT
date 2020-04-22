@@ -7,7 +7,6 @@ class BatchCollator(object):
     def __init__(self, dataset, append_ind=False):
         self.dataset = dataset
         self.test_mode = self.dataset.test_mode
-        self.task = self.dataset.task
         self.data_names = self.dataset.data_names
         self.append_ind = append_ind
 

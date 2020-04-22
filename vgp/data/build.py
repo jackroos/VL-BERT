@@ -1,4 +1,10 @@
 import torch.utils.data
+import os
+
+import sys
+root_path = os.path.abspath(os.getcwd())
+if root_path not in sys.path:
+    sys.path.append(root_path)
 
 from .datasets import *
 from . import samplers
@@ -117,14 +123,11 @@ def make_dataloader(cfg, dataset=None, mode='train', distributed=False, num_repl
 
 
 def test_dataloader():
-    import os
-    import pdb
     from vgp.function.config import config, update_config
-    cfg_path = os.path.join('cfgs', 'vgp', 'base_4x16G_fp32.yaml')
+    cfg_path = os.path.join(root_path, 'cfgs', 'vgp', 'base_4x16G_fp32.yaml')
     update_config(cfg_path)
     dataloader = make_dataloader(config, dataset=None, mode='train')
     for batch in dataloader:
-        pdb.set_trace()
         print(len(batch))
 
 

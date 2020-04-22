@@ -75,7 +75,8 @@ class RandomHorizontalFlip(object):
             w, h = image.size
             image = F.hflip(image)
             boxes[:, [0, 2]] = w - 1 - boxes[:, [2, 0]]
-            masks = torch.as_tensor(masks.numpy()[:, :, ::-1].tolist())
+            if masks is not None:
+                masks = torch.as_tensor(masks.numpy()[:, :, ::-1].tolist())
         return image, boxes, masks, im_info
 
 
