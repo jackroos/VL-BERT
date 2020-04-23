@@ -2,6 +2,7 @@ import os
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import pdb
 
 import sys
 root_path = os.path.abspath(os.getcwd())
@@ -21,7 +22,8 @@ class ResNetVLBERT(Module):
     def __init__(self, config):
 
         super(ResNetVLBERT, self).__init__(config)
-
+        self.enable_cnn_reg_loss = config.NETWORK.ENABLE_CNN_REG_LOSS
+        self.cnn_loss_top = config.NETWORK.CNN_LOSS_TOP
         if not config.NETWORK.BLIND:
             self.image_feature_extractor = FastRCNN(config,
                                                     average_pool=True,
@@ -59,7 +61,8 @@ class ResNetVLBERT(Module):
             VisualLinguisticBert(config.NETWORK.VLBERT,
                                  language_pretrained_model_path=language_pretrained_model_path)
         )
-
+        
+        self.for_pretrain = False
         dim = config.NETWORK.VLBERT.hidden_size
         if config.NETWORK.CLASSIFIER_TYPE == "2fc":
             self.final_mlp = torch.nn.Sequential(
@@ -127,10 +130,10 @@ class ResNetVLBERT(Module):
     def prepare_text(self, sentence1, sentence2, mask1, mask2, phrase1_mask, phrase2_mask):
         batch_size, max_len1 = sentence1.shape
         _, max_len2 = sentence2.shape
-        max_len = (mask1.sum(1) + mask2.sum(2).max(1)[0]).max() + 3
+        max_len = (mask1.sum(1) + mask2.sum(1)).max() + 3
         cls_id, sep_id = self.tokenizer.convert_tokens_to_ids(['[CLS]', '[SEP]'])
-        end_1 = 1 + mask1.sum(2, keepdim=True)
-        end_2 = end_1 + 1 + mask2.sum(2, keepdim=True)
+        end_1 = 1 + mask1.sum(1, keepdim=True)
+        end_2 = end_1 + 1 + mask2.sum(1, keepdim=True)
         input_ids = torch.zeros((batch_size, max_len), dtype=sentence1.dtype, device=sentence1.device)
         input_mask = torch.ones((batch_size, max_len), dtype=torch.uint8, device=sentence1.device)
         input_type_ids = torch.zeros((batch_size, max_len), dtype=sentence1.dtype, device=sentence1.device)
@@ -142,7 +145,7 @@ class ResNetVLBERT(Module):
         input_type_ids[(grid_k > end_1) & (grid_k <= end_2)] = 1
         input_mask1 = (grid_k > 0) & (grid_k < end_1)
         input_mask2 = (grid_k > end_1) & (grid_k < end_2)
-        input_ids[:, :, 0] = cls_id
+        input_ids[:, 0] = cls_id
         input_ids[grid_k == end_1] = sep_id
         input_ids[grid_k == end_2] = sep_id
         input_ids[input_mask1] = sentence1[mask1]
@@ -159,7 +162,6 @@ class ResNetVLBERT(Module):
     def train_forward(self,
                       images,
                       boxes,
-                      masks,
                       sentence1,
                       sentence2,
                       im_info,
@@ -175,7 +177,7 @@ class ResNetVLBERT(Module):
 
         max_len = int(box_mask.sum(1).max().item())
         box_mask = box_mask[:, :max_len]
-        boxes = boxes[:, :max_len]
+        boxes = boxes[:, :max_len].type(torch.float32)
 
         # segms = segms[:, :max_len]
 
@@ -193,7 +195,7 @@ class ResNetVLBERT(Module):
         sentence1_ids = sentence1[:, :, 0]
         mask1 = (sentence1[:, :, 0] > 0.5)
         phrase1_mask = sentence1[:, :, 1]
-        sentence2_ids = sentence2[:, :, :0]
+        sentence2_ids = sentence2[:, :, 0]
         mask2 = (sentence2[:, :, 0] > 0.5)
         phrase2_mask = sentence2[:, :, 1]
 
@@ -375,15 +377,12 @@ class ResNetVLBERT(Module):
 def test_module():
     from vgp.function.config import config, update_config
     from vgp.data.build import make_dataloader
-    import pdb
     cfg_path = os.path.join(root_path, 'cfgs', 'vgp', 'base_4x16G_fp32.yaml')
     update_config(cfg_path)
     dataloader = make_dataloader(config, dataset=None, mode='train')
     module = ResNetVLBERT(config)
     for batch in dataloader:
-        print(len(batch))
-        pdb.set_trace()
-        outputs, loss = module(batch)
+        outputs, loss = module(*batch)
 
 
 if __name__ == '__main__':
