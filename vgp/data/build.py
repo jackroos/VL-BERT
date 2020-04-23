@@ -98,7 +98,7 @@ def make_dataloader(cfg, dataset=None, mode='train', distributed=False, num_repl
 
         print('Dataset kwargs:')
         pprint.pprint(kwargs)
-        dataset = build_dataset(dataset_name=cfg.DATASET.DATASET, full_sentences_set=cfg.DATASET.FULL_SENTENCES_SET,
+        dataset = build_dataset(dataset_name=cfg.DATASET.DATASET, captions_set=cfg.DATASET.CAPTIONS_SET,
                                 ann_file=ann_file, roi_set=cfg.DATASET.ROI_SET, image_set=cfg.DATASET.IMAGE_SET,
                                 root_path=cfg.DATASET.ROOT_PATH, data_path=cfg.DATASET.DATASET_PATH,
                                 transform=transform, test_mode=(mode == 'test'),  zip_mode=cfg.DATASET.ZIP_MODE,

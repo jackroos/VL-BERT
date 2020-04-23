@@ -265,9 +265,9 @@ class VGPDataset(Dataset):
     @property
     def data_names(self):
         if not self.test_mode:
-            data_names = ['image', 'boxes', 'sentence1', 'sentence2', 'im_info', 'label', 'first_correct']
+            data_names = ['image', 'boxes', 'caption1', 'caption2', 'im_info', 'label', 'first_correct']
         else:
-            data_names = ['image', 'boxes', 'sentence1', 'sentence2', 'im_info']
+            data_names = ['image', 'boxes', 'caption1', 'caption2', 'im_info']
 
         return data_names
 
@@ -278,8 +278,8 @@ def test_vgp():
     roi_set = "Annotations"
     root_path = ""
     data_path = os.path.join(os.getcwd(), "data/vgp/")
-    dataset = VGPDataset(captions_set="Sentences", ann_file=ann_file, roi_set=roi_set, image_set=image_set, root_path=root_path,
-                         data_path=data_path)
+    dataset = VGPDataset(captions_set="Sentences", ann_file=ann_file, roi_set=roi_set, image_set=image_set,
+                         root_path=root_path, data_path=data_path)
     print(len(dataset.__getitem__(0)))
 
 
