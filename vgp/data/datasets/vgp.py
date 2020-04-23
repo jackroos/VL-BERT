@@ -166,7 +166,7 @@ class VGPDataset(Dataset):
         boxes = torch.tensor(boxes)
         if self.add_image_as_a_box:
             image_box = torch.as_tensor([[0, 0, w0 - 1, h0 - 1, 0]])
-            boxes = torch.cat((image_box, boxes), dim=0)
+            boxes = torch.cat((image_box.type(torch.float32), boxes.type(torch.float32)), dim=0)
 
         # transform
         im_info = torch.tensor([w0, h0, 1.0, 1.0, index])
@@ -242,11 +242,11 @@ class VGPDataset(Dataset):
         formatted_text = []
         relevant_boxes = []
         for caption in captions:
-            caption = caption.replace("[", "$").replace("]", "$").split("$")
+            caption = caption.replace("[", "¥¥¥").replace("]", "¥¥¥").split("¥¥¥")
             extracted_entities = []
             box_ids = []
             for string in caption:
-                if "#" in string:
+                if string.startswith("/EN#"):
                     box_id = string.split("#")[1].split("/")[0]
                     text = string.split(" ")[1:]
                     if len(text) == 1:
@@ -257,7 +257,12 @@ class VGPDataset(Dataset):
                     box_id = "0"
                     text = string
                 extracted_entities.append(text)
-                box_ids.append(int(box_id))
+                try:
+                    box_ids.append(int(box_id))
+                except:
+                    print(box_id)
+                    print(captions)
+                    assert False
             formatted_text.append(extracted_entities)
             relevant_boxes.append(box_ids)
         return formatted_text, relevant_boxes

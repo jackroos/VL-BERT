@@ -6,10 +6,10 @@ root_path = os.path.abspath(os.getcwd())
 if root_path not in sys.path:
     sys.path.append(root_path)
 
-from .datasets import *
-from . import samplers
-from .transforms.build import build_transforms
-from .collate_batch import BatchCollator
+from vgp.data.datasets import *
+from vgp.data import samplers
+from vgp.data.transforms.build import build_transforms
+from vgp.data.collate_batch import BatchCollator
 import pprint
 
 DATASET_CATALOGS = {'vgp': VGPDataset}
