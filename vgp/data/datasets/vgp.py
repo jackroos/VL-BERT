@@ -23,7 +23,7 @@ from common.nlp.roberta import RobertaTokenizer
 class VGPDataset(Dataset):
     def __init__(self, captions_set, ann_file, roi_set, image_set, root_path, data_path, transform=None,
                  test_mode=False, zip_mode=False, cache_mode=False, cache_db=False, ignore_db_cache=True,
-                 basic_tokenizer=None, tokenizer=None, pretrained_model_name=None, add_image_as_a_box=False, **kwargs):
+                 basic_tokenizer=None, tokenizer=None, pretrained_model_name=None, add_image_as_a_box=True, **kwargs):
         """
         Visual Grounded Paraphrase Dataset
 
@@ -97,7 +97,7 @@ class VGPDataset(Dataset):
         print('loading database from {} and creating pairs...'.format(captions_set))
         tic = time.time()
         img_id_list = np.array(os.listdir(captions_set))
-        for folder in img_id_list:
+        for k, folder in enumerate(img_id_list):
             img_id = folder[:-4]
             path = os.path.join(captions_set, folder)
             list_captions = open(path).read().split("\n")[:-1]
@@ -110,15 +110,15 @@ class VGPDataset(Dataset):
                         'caption1': list_captions[i],
                         'caption2': list_captions[j],
                         'label': 1,
-                        'first_correct': None
+                        'first_correct': True
                     }
                     database.append(db_i)
             # Randomly select two captions from another image in order to have negative samples
             other_imgs = img_id_list[img_id_list != folder]
             # Fix the seed to have data set reproducibility
-            np.random.seed(int(img_id))
+            np.random.seed(k)
             neg_image = np.random.choice(other_imgs, size=1)[0]
-            np.random.seed(int(img_id))
+            np.random.seed(k)
             neg_path = os.path.join(captions_set, neg_image)
             neg_captions = np.random.choice(open(neg_path).read().split("\n")[:-1], size=2, replace=False)
 
@@ -126,7 +126,7 @@ class VGPDataset(Dataset):
             for caption in list_captions:
                 for wrong_caption in neg_captions:
                     # Randomly flip whether the wrong caption comes first or second, fix the seed for every image
-                    np.random.seed(int(img_id))
+                    np.random.seed(k)
                     flip = np.random.randint(2, size=1).astype(bool)[0]
                     db_i = {
                         'img_id': img_id,
@@ -196,19 +196,21 @@ class VGPDataset(Dataset):
         # Convert token to ids and concatenate visual grounding
         caption1_ids = torch.as_tensor(self.tokenizer.convert_tokens_to_ids(tokens1)).unsqueeze(1)
         caption2_ids = torch.as_tensor(self.tokenizer.convert_tokens_to_ids(tokens2)).unsqueeze(1)
-        vl_ground_idx1 = torch.as_tensor([boxes[:, -1].tolist().index(box_id)
+        vl_ground_idx1 = torch.as_tensor([boxes[:, -1].tolist().index(box_id) if box_id in boxes[:, -1] 
+                                          else boxes[:, -1].tolist().index(0)
                                           for box_id in txt_visual_ground1]).unsqueeze(1)
-        vl_ground_idx2 = torch.as_tensor([boxes[:, -1].tolist().index(box_id)
+        vl_ground_idx2 = torch.as_tensor([boxes[:, -1].tolist().index(box_id) if box_id in boxes[:, -1] 
+                                          else boxes[:, -1].tolist().index(0) 
                                           for box_id in txt_visual_ground2]).unsqueeze(1)
-        final_input_1 = torch.cat((caption1_ids, vl_ground_idx1), axis=1)
-        final_input_2 = torch.cat((caption2_ids, vl_ground_idx2), axis=1)
+        final_input_1 = torch.cat((caption1_ids, vl_ground_idx1), dim=1)
+        final_input_2 = torch.cat((caption2_ids, vl_ground_idx2), dim=1)
 
         # Add (later) mask to locate sub-phrases inside full sentence
 
         # Load label
         label = torch.as_tensor(int(idb['label'])) if not self.test_mode else None
 
-        first_correct = torch.as_tensor(int(idb['first_correct'])) if not self.test_mode else None
+        first_correct = torch.as_tensor(idb['first_correct']) if not self.test_mode else None
 
         if not self.test_mode:
             outputs = (image, boxes, final_input_1, final_input_2, im_info, label, first_correct)
@@ -263,7 +265,7 @@ class VGPDataset(Dataset):
     @property
     def data_names(self):
         if not self.test_mode:
-            data_names = ['image', 'boxes', 'sentence1', 'sentence2', 'im_info', 'label']
+            data_names = ['image', 'boxes', 'sentence1', 'sentence2', 'im_info', 'label', 'first_correct']
         else:
             data_names = ['image', 'boxes', 'sentence1', 'sentence2', 'im_info']
 
