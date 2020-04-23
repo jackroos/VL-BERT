@@ -3,7 +3,7 @@ import time
 import _pickle as cPickle
 from PIL import Image
 from copy import deepcopy
-from csv import DictReader
+import numpy as np
 import xml.etree.ElementTree as ET
 
 import sys
@@ -17,15 +17,11 @@ from external.pytorch_pretrained_bert import BertTokenizer, BasicTokenizer
 
 from common.utils.zipreader import ZipReader
 from common.utils.create_logger import makedirsExist
-from common.utils.mask import generate_instance_mask
-from common.nlp.misc import get_align_matrix
-from common.utils.misc import block_digonal_matrix
-from common.nlp.misc import random_word_with_token_ids
 from common.nlp.roberta import RobertaTokenizer
 
 
 class VGPDataset(Dataset):
-    def __init__(self, full_sentences_set, ann_file, roi_set, image_set, root_path, data_path, transform=None,
+    def __init__(self, captions_set, ann_file, roi_set, image_set, root_path, data_path, transform=None,
                  test_mode=False, zip_mode=False, cache_mode=False, cache_db=False, ignore_db_cache=True,
                  basic_tokenizer=None, tokenizer=None, pretrained_model_name=None, add_image_as_a_box=False, **kwargs):
         """
@@ -49,7 +45,7 @@ class VGPDataset(Dataset):
 
         self.data_path = data_path
         self.root_path = root_path
-        self.full_sentences_set = os.path.join(data_path, full_sentences_set)
+        self.captions_set = os.path.join(data_path, captions_set)
         self.ann_file = os.path.join(data_path, ann_file)
         self.roi_set = os.path.join(data_path, roi_set)
         self.image_set = os.path.join(self.data_path, image_set)
@@ -77,9 +73,9 @@ class VGPDataset(Dataset):
         if zip_mode:
             self.zipreader = ZipReader()
 
-        self.database = self.load_phrases(self.ann_file)
+        self.database = self.load_phrases(self.captions_set)
 
-    def load_phrases(self, ann_file):
+    def load_phrases(self, captions_set):
         database = []
         db_cache_name = 'vgp_nometa'
         db_cache_root = os.path.join(self.root_path, 'cache')
@@ -98,21 +94,52 @@ class VGPDataset(Dataset):
                 print('cached database ignored.')
 
         # ignore or not find cached database, reload it from annotation file
-        print('loading database from {}...'.format(ann_file))
+        print('loading database from {} and creating pairs...'.format(captions_set))
         tic = time.time()
+        img_id_list = np.array(os.listdir(captions_set))
+        for folder in img_id_list:
+            img_id = folder[:-4]
+            path = os.path.join(captions_set, folder)
+            list_captions = open(path).read().split("\n")[:-1]
 
-        # open file in read mode
-        with open(ann_file, 'r') as read_obj:
-            csv_reader = DictReader(read_obj)
-            # Iterate over each row in the csv using reader object
-            for paraph in csv_reader:
-                db_i = {
-                    'img_id': paraph["image"],
-                    'phrase1': paraph['original_phrase1'],
-                    'phrase2': paraph['original_phrase2'],
-                    'label': paraph['type_label']
-                }
-                database.append(db_i)
+            # Create all pairs of captions that describe the same image
+            for i in range(len(list_captions)):
+                for j in range(i):
+                    db_i = {
+                        'img_id': img_id,
+                        'caption1': list_captions[i],
+                        'caption2': list_captions[j],
+                        'label': 1,
+                        'first_correct': None
+                    }
+                    database.append(db_i)
+            # Randomly select two captions from another image in order to have negative samples
+            other_imgs = img_id_list[img_id_list != folder]
+            # Fix the seed to have data set reproducibility
+            np.random.seed(int(img_id))
+            neg_image = np.random.choice(other_imgs, size=1)[0]
+            np.random.seed(int(img_id))
+            neg_path = os.path.join(captions_set, neg_image)
+            neg_captions = np.random.choice(open(neg_path).read().split("\n")[:-1], size=2, replace=False)
+
+            # Create negative pairs
+            for caption in list_captions:
+                for wrong_caption in neg_captions:
+                    # Randomly flip whether the wrong caption comes first or second, fix the seed for every image
+                    np.random.seed(int(img_id))
+                    flip = np.random.randint(2, size=1).astype(bool)[0]
+                    db_i = {
+                        'img_id': img_id,
+                        'label': 0,
+                        'first_correct': not flip
+                    }
+                    if flip:
+                        db_i['caption1'] = wrong_caption
+                        db_i['caption2'] = caption
+                    else:
+                        db_i['caption1'] = caption
+                        db_i['caption2'] = wrong_caption
+                    database.append(db_i)
         print('Done (t={:.2f}s)'.format(time.time() - tic))
 
         # cache database via cPickle
@@ -130,31 +157,17 @@ class VGPDataset(Dataset):
     def __getitem__(self, index):
         idb = deepcopy(self.database[index])
 
+        # Load image and regions of interest
         img_id = idb['img_id']
         image = self._load_image(img_id)
         boxes = self._load_roi(img_id)
-
-        # Format input text
-        phrase1_tokens = self.tokenizer.tokenize(idb['phrase1'])
-        phrase1_ids = torch.as_tensor(self.tokenizer.convert_tokens_to_ids(phrase1_tokens)).unsqueeze(1)
-        phrase2_tokens = self.tokenizer.tokenize(idb['phrase2'])
-        phrase2_ids = torch.as_tensor(self.tokenizer.convert_tokens_to_ids(phrase2_tokens)).unsqueeze(1)
-
-        # Add mask to locate sub-phrases inside full sentence
-        # For now full sentence is just the sub-phrase
-        phrase1_mask = torch.ones_like(phrase1_ids)
-        phrase2_mask = torch.ones_like(phrase2_ids)
-        sentence1 = torch.cat((phrase1_ids, phrase1_mask), dim=1)
-        sentence2 = torch.cat((phrase2_ids, phrase2_mask), dim=1)
-
         w0, h0 = image.size
 
-        # extract bounding boxes and instance masks in metadata
         boxes = torch.tensor(boxes)
         if self.add_image_as_a_box:
-            image_box = torch.as_tensor([[0, 0, w0 - 1, h0 - 1]])
+            image_box = torch.as_tensor([[0, 0, w0 - 1, h0 - 1, 0]])
             boxes = torch.cat((image_box, boxes), dim=0)
-            
+
         # transform
         im_info = torch.tensor([w0, h0, 1.0, 1.0, index])
         if self.transform is not None:
@@ -164,13 +177,43 @@ class VGPDataset(Dataset):
         boxes[:, [0, 2]] = boxes[:, [0, 2]].clamp(min=0, max=w0 - 1)
         boxes[:, [1, 3]] = boxes[:, [1, 3]].clamp(min=0, max=h0 - 1)
 
+        # Format input text
+        captions = [idb["caption1"], idb["caption2"]]
+        formatted_text, relevant_boxes = self._extract_text_and_roi(captions)
+
+        # Tokenize and align tokens with visual boxes
+        tokens1 = [self.tokenizer.tokenize(raw_text) for raw_text in formatted_text[0]]
+        txt_visual_ground1 = [[relevant_boxes[0][i]]*len(tokens) for i, tokens in enumerate(tokens1)]
+        tokens2 = [self.tokenizer.tokenize(raw_text) for raw_text in formatted_text[1]]
+        txt_visual_ground2 = [[relevant_boxes[1][i]] * len(tokens) for i, tokens in enumerate(tokens2)]
+
+        # Flatten lists
+        tokens1 = [token for sublist in tokens1 for token in sublist]
+        tokens2 = [token for sublist in tokens2 for token in sublist]
+        txt_visual_ground1 = [box for sublist in txt_visual_ground1 for box in sublist]
+        txt_visual_ground2 = [box for sublist in txt_visual_ground2 for box in sublist]
+
+        # Convert token to ids and concatenate visual grounding
+        caption1_ids = torch.as_tensor(self.tokenizer.convert_tokens_to_ids(tokens1)).unsqueeze(1)
+        caption2_ids = torch.as_tensor(self.tokenizer.convert_tokens_to_ids(tokens2)).unsqueeze(1)
+        vl_ground_idx1 = torch.as_tensor([boxes[:, -1].tolist().index(box_id)
+                                          for box_id in txt_visual_ground1]).unsqueeze(1)
+        vl_ground_idx2 = torch.as_tensor([boxes[:, -1].tolist().index(box_id)
+                                          for box_id in txt_visual_ground2]).unsqueeze(1)
+        final_input_1 = torch.cat((caption1_ids, vl_ground_idx1), axis=1)
+        final_input_2 = torch.cat((caption2_ids, vl_ground_idx2), axis=1)
+
+        # Add (later) mask to locate sub-phrases inside full sentence
+
         # Load label
         label = torch.as_tensor(int(idb['label'])) if not self.test_mode else None
 
+        first_correct = torch.as_tensor(int(idb['first_correct'])) if not self.test_mode else None
+
         if not self.test_mode:
-            outputs = (image, boxes, sentence1, sentence2, im_info, label)
+            outputs = (image, boxes, final_input_1, final_input_2, im_info, label, first_correct)
         else:
-            outputs = (image, boxes, sentence1, sentence2, im_info)
+            outputs = (image, boxes, final_input_1, final_input_2, im_info)
 
         return outputs
 
@@ -189,8 +232,33 @@ class VGPDataset(Dataset):
         for obj in root[2:]:
             if obj[1].tag == 'bndbox':
                 dimensions = {obj[1][dim].tag: int(obj[1][dim].text) for dim in range(4)}
-                boxes.append([dimensions['xmin'], dimensions['ymin'], dimensions['xmax'], dimensions['ymax']])
+                boxes.append([dimensions['xmin'], dimensions['ymin'], dimensions['xmax'], dimensions['ymax'],
+                              int(obj[0].text)])
         return boxes
+
+    def _extract_text_and_roi(self, captions):
+        formatted_text = []
+        relevant_boxes = []
+        for caption in captions:
+            caption = caption.replace("[", "$").replace("]", "$").split("$")
+            extracted_entities = []
+            box_ids = []
+            for string in caption:
+                if "#" in string:
+                    box_id = string.split("#")[1].split("/")[0]
+                    text = string.split(" ")[1:]
+                    if len(text) == 1:
+                        text = text[0]
+                    else:
+                        text = " ".join(text)
+                else:
+                    box_id = "0"
+                    text = string
+                extracted_entities.append(text)
+                box_ids.append(int(box_id))
+            formatted_text.append(extracted_entities)
+            relevant_boxes.append(box_ids)
+        return formatted_text, relevant_boxes
 
     @property
     def data_names(self):
@@ -208,7 +276,7 @@ def test_vgp():
     roi_set = "Annotations"
     root_path = ""
     data_path = os.path.join(os.getcwd(), "data/vgp/")
-    dataset = VGPDataset(full_sentences_set="", ann_file=ann_file, roi_set=roi_set, image_set=image_set, root_path=root_path,
+    dataset = VGPDataset(captions_set="Sentences", ann_file=ann_file, roi_set=roi_set, image_set=image_set, root_path=root_path,
                          data_path=data_path)
     print(len(dataset.__getitem__(0)))
 
