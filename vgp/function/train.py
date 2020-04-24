@@ -16,15 +16,15 @@ from common.utils.misc import summary_parameters, bn_fp16_half_eval
 from common.utils.load import smart_resume, smart_partial_load_model_state_dict
 from common.trainer import train
 from common.metrics.composite_eval_metric import CompositeEvalMetric
-from common.metrics import vcr_metrics
+from common.metrics import vgp_metrics
 from common.callbacks.batch_end_callbacks.speedometer import Speedometer
 from common.callbacks.epoch_end_callbacks.validation_monitor import ValidationMonitor
 from common.callbacks.epoch_end_callbacks.checkpoint import Checkpoint
 from common.lr_scheduler import WarmupMultiStepLR
 from common.nlp.bert.optimization import AdamW, WarmupLinearSchedule
-from vcr.data.build import make_dataloader, build_dataset, build_transforms
-from vcr.modules import *
-from vcr.function.val import do_validation
+from vgp.data.build import make_dataloader, build_dataset, build_transforms
+from vgp.modules import *
+from vgp.function.val import do_validation
 
 try:
     from apex import amp
@@ -232,14 +232,14 @@ def train_net(args, config):
         smart_partial_load_model_state_dict(model, pretrain_state_dict)
 
     # metrics
-    train_metrics_list = [vcr_metrics.Accuracy(allreduce=args.dist,
+    train_metrics_list = [vgp_metrics.Accuracy(allreduce=args.dist,
                                                num_replicas=world_size if args.dist else 1)]
-    val_metrics_list = [vcr_metrics.Accuracy(allreduce=args.dist,
+    val_metrics_list = [vgp_metrics.Accuracy(allreduce=args.dist,
                                              num_replicas=world_size if args.dist else 1)]
 
     for output_name, display_name in config.TRAIN.LOSS_LOGGERS:
         train_metrics_list.append(
-            vcr_metrics.LossLogger(output_name, display_name=display_name, allreduce=args.dist,
+            vgp_metrics.LossLogger(output_name, display_name=display_name, allreduce=args.dist,
                                    num_replicas=world_size if args.dist else 1))
 
     train_metrics = CompositeEvalMetric()

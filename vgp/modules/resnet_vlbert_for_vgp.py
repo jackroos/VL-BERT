@@ -271,7 +271,7 @@ class ResNetVLBERT(Module):
 
         outputs.update({'sentence_label_logits': sentence_logits,
                         'sentence_label': sentence_label.long().view(-1),
-                        'cls_loss': sentence_cls_loss})
+                        'sentence_cls_loss': sentence_cls_loss})
 
         # phrasal paraphrases classification (later)
         phrase_cls_loss = torch.tensor([0], dtype=torch.float32)
