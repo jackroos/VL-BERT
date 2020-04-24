@@ -28,6 +28,7 @@ DATASET:
   ZIP_MODE: false
   CACHE_MODE: false
   IGNORE_DB_CACHE: true
+  USE_PHRASAL_PARAPHRASES: false
 
 NETWORK:
   PARTIAL_PRETRAIN: "./model/pretrained_model/vl-bert-base-e2e.model"
@@ -62,7 +63,7 @@ NETWORK:
   BERT_PRETRAINED_EPOCH: 0
   BERT_FROZEN: false
   ENABLE_CNN_REG_LOSS: false
-  ANS_LOSS_WEIGHT: 1.0
+  PHRASE_LOSS_WEIGHT: 1.0
   CNN_LOSS_TOP: false
 
   VLBERT:
@@ -83,10 +84,14 @@ NETWORK:
     visual_scale_object_init: 0.0
     visual_ln: true
     object_word_embed_mode: 2
-
-  CLASSIFIER_TYPE: "1fc"
-  CLASSIFIER_HIDDEN_SIZE: 1024
-  CLASSIFIER_DROPOUT: 0.1
+  SENTENCE:
+    CLASSIFIER_TYPE: "1fc"
+    CLASSIFIER_HIDDEN_SIZE: 1024
+    CLASSIFIER_DROPOUT: 0.1
+  PHRASE:
+    CLASSIFIER_TYPE: "1fc"
+    CLASSIFIER_HIDDEN_SIZE: 1024
+    CLASSIFIER_DROPOUT: 0.1
 
 TRAIN:
   SHUFFLE: true

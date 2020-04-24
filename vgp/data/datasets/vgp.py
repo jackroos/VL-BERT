@@ -270,7 +270,7 @@ class VGPDataset(Dataset):
     @property
     def data_names(self):
         if not self.test_mode:
-            data_names = ['image', 'boxes', 'caption1', 'caption2', 'im_info', 'label', 'first_correct']
+            data_names = ['image', 'boxes', 'caption1', 'caption2', 'im_info', 'sentence_label', 'first_correct']
         else:
             data_names = ['image', 'boxes', 'caption1', 'caption2', 'im_info']
 
