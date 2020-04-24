@@ -2,7 +2,6 @@ import os
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import pdb
 
 import sys
 root_path = os.path.abspath(os.getcwd())
@@ -11,7 +10,6 @@ if root_path not in sys.path:
 from external.pytorch_pretrained_bert import BertTokenizer
 from common.module import Module
 from common.fast_rcnn import FastRCNN
-from common.nlp.time_distributed import TimeDistributed
 from common.visual_linguistic_bert import VisualLinguisticBert, VisualLinguisticBertMVRCHeadTransform
 from common.nlp.roberta import RobertaTokenizer
 
@@ -58,10 +56,8 @@ class ResNetVLBERT(Module):
         if language_pretrained_model_path is None:
             print("Warning: no pretrained language model found, training from scratch!!!")
 
-        self.vlbert = TimeDistributed(
-            VisualLinguisticBert(config.NETWORK.VLBERT,
-                                 language_pretrained_model_path=language_pretrained_model_path)
-        )
+        self.vlbert = VisualLinguisticBert(config.NETWORK.VLBERT,
+                                           language_pretrained_model_path=language_pretrained_model_path)
         
         self.for_pretrain = False
         dim = config.NETWORK.VLBERT.hidden_size
@@ -202,7 +198,6 @@ class ResNetVLBERT(Module):
         boxes = boxes[:, :max_len].type(torch.float32)
 
         # segms = segms[:, :max_len]
-
         if self.config.NETWORK.BLIND:
             obj_reps = {'obj_reps': boxes.new_zeros((*boxes.shape[:-1], self.config.NETWORK.IMAGE_FINAL_DIM))}
         else:
@@ -228,7 +223,7 @@ class ResNetVLBERT(Module):
             phrase1_mask, phrase2_mask = None, None
 
         ############################################
-
+        
         # prepare text
         text_input_ids, text_token_type_ids, text_tags, text_mask, phrase_masks = self.prepare_text(sentence1_ids,
                                                                                                     sentence2_ids,
@@ -243,7 +238,6 @@ class ResNetVLBERT(Module):
         if self.config.NETWORK.NO_GROUNDING:
             text_tags.zero_()
         text_visual_embeddings = self._collect_obj_reps(text_tags, obj_reps['obj_reps'])
-
         # Add textual feature to image element
         if self.config.NETWORK.BLIND:
             object_linguistic_embeddings = boxes.new_zeros((*boxes.shape[:-1], self.config.NETWORK.VLBERT.hidden_size))
@@ -255,10 +249,8 @@ class ResNetVLBERT(Module):
         ###########################################
 
         # Visual Linguistic BERT
-
         if self.config.NETWORK.NO_OBJ_ATTENTION or self.config.NETWORK.BLIND:
             box_mask.zero_()
-
         hidden_states_text, hidden_states_objects, pooled_rep = self.vlbert(text_input_ids,
                                                                             text_token_type_ids,
                                                                             text_visual_embeddings,
@@ -270,19 +262,19 @@ class ResNetVLBERT(Module):
 
         ###########################################
         outputs = {}
-
+        
         # sentence classification
         sentence_logits = self.sentence_cls(pooled_rep)
-
+        
         # loss on paraphrase discrimination
-        sentence_cls_loss = F.binary_cross_entropy_with_logits(sentence_logits, sentence_label.long().view(-1))
+        sentence_cls_loss = F.binary_cross_entropy_with_logits(sentence_logits.view(-1), sentence_label.type(torch.float32))
 
         outputs.update({'sentence_label_logits': sentence_logits,
                         'sentence_label': sentence_label.long().view(-1),
                         'cls_loss': sentence_cls_loss})
 
         # phrasal paraphrases classification (later)
-        phrase_cls_loss = torch.tensor([0])
+        phrase_cls_loss = torch.tensor([0], dtype=torch.float32)
         # max pooling representation of each phrase
         # h_rep_ph1 = hidden_states_text[:, ph1_mask, :].max(axis=1)
         # h_rep_ph2 = hidden_states_text[:, ph2_mask, :].max(axis=1)

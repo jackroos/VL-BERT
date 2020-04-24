@@ -176,6 +176,10 @@ class VGPDataset(Dataset):
         # clamp boxes
         boxes[:, [0, 2]] = boxes[:, [0, 2]].clamp(min=0, max=w0 - 1)
         boxes[:, [1, 3]] = boxes[:, [1, 3]].clamp(min=0, max=h0 - 1)
+        
+        # keep box names and dimensions separated
+        box_names = boxes[:, -1].tolist()
+        boxes = boxes[:, :4]
 
         # Format input text
         captions = [idb["caption1"], idb["caption2"]]
@@ -196,11 +200,9 @@ class VGPDataset(Dataset):
         # Convert token to ids and concatenate visual grounding
         caption1_ids = torch.as_tensor(self.tokenizer.convert_tokens_to_ids(tokens1)).unsqueeze(1)
         caption2_ids = torch.as_tensor(self.tokenizer.convert_tokens_to_ids(tokens2)).unsqueeze(1)
-        vl_ground_idx1 = torch.as_tensor([boxes[:, -1].tolist().index(box_id) if box_id in boxes[:, -1] 
-                                          else boxes[:, -1].tolist().index(0)
+        vl_ground_idx1 = torch.as_tensor([box_names.index(box_id) if box_id in box_names else box_names.index(0)
                                           for box_id in txt_visual_ground1]).unsqueeze(1)
-        vl_ground_idx2 = torch.as_tensor([boxes[:, -1].tolist().index(box_id) if box_id in boxes[:, -1] 
-                                          else boxes[:, -1].tolist().index(0) 
+        vl_ground_idx2 = torch.as_tensor([box_names.index(box_id) if box_id in box_names else box_names.index(0)
                                           for box_id in txt_visual_ground2]).unsqueeze(1)
         final_input_1 = torch.cat((caption1_ids, vl_ground_idx1), dim=1)
         final_input_2 = torch.cat((caption2_ids, vl_ground_idx2), dim=1)
