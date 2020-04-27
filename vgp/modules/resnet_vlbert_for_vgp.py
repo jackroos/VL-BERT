@@ -286,35 +286,25 @@ class ResNetVLBERT(Module):
         return outputs, loss
 
     def inference_forward(self,
-                          image,
+                          images,
                           boxes,
-                          masks,
-                          question,
-                          question_align_matrix,
-                          answer_choices,
-                          answer_align_matrix,
-                          *args):
-
-        if self.for_pretrain:
-            answer_label, im_info, mask_position, mask_type = args
-        else:
-            assert len(args) == 1
-            im_info = args[0]
-
+                          sentence1,
+                          sentence2,
+                          im_info):
         ###########################################
-
         # visual feature extraction
-        images = image
-        objects = boxes[:, :, -1]
-        segms = masks
-        boxes = boxes[:, :, :4]
-        box_mask = (boxes[:, :, -1] > - 0.5)
-        max_len = int(box_mask.sum(1).max().item())
-        objects = objects[:, :max_len]
-        box_mask = box_mask[:, :max_len]
-        boxes = boxes[:, :max_len]
-        segms = segms[:, :max_len]
 
+        # Don't know what segments are for
+        # segms = masks
+
+        # For now use all boxes
+        box_mask = torch.ones(boxes[:, :, -1].size(), dtype=torch.uint8)
+
+        max_len = int(box_mask.sum(1).max().item())
+        box_mask = box_mask[:, :max_len]
+        boxes = boxes[:, :max_len].type(torch.float32)
+
+        # segms = segms[:, :max_len]
         if self.config.NETWORK.BLIND:
             obj_reps = {'obj_reps': boxes.new_zeros((*boxes.shape[:-1], self.config.NETWORK.IMAGE_FINAL_DIM))}
         else:
@@ -322,81 +312,70 @@ class ResNetVLBERT(Module):
                                                     boxes=boxes,
                                                     box_mask=box_mask,
                                                     im_info=im_info,
-                                                    classes=objects,
-                                                    segms=segms)
+                                                    classes=None,
+                                                    segms=None)
 
-        num_choices = answer_choices.shape[1]
-        question_ids = question[:, :, 0]
-        question_tags = question[:, :, 1]
-        question_tags = question_tags.repeat(1, num_choices).view(question_tags.shape[0], num_choices, -1)
-        question_mask = (question[:, :, 0] > 0.5)
-        answer_ids = answer_choices[:, :, :, 0]
-        answer_tags = answer_choices[:, :, :, 1]
-        answer_mask = (answer_choices[:, :, :, 0] > 0.5)
+        # For now no tags
+        sentence1_ids = sentence1[:, :, 0]
+        mask1 = (sentence1[:, :, 0] > 0.5)
+        sentence1_tags = sentence1[:, :, 1]
+        sentence2_ids = sentence2[:, :, 0]
+        mask2 = (sentence2[:, :, 0] > 0.5)
+        sentence2_tags = sentence2[:, :, 1]
+
+        if self.use_phrasal_paraphrases:
+            phrase1_mask = sentence1[:, :, -1]
+            phrase2_mask = sentence2[:, :, -1]
+        else:
+            phrase1_mask, phrase2_mask = None, None
 
         ############################################
 
         # prepare text
-        text_input_ids, text_token_type_ids, text_tags, text_mask = self.prepare_text_from_qa(
-            question_ids,
-            question_tags,
-            question_mask,
-            answer_ids,
-            answer_tags,
-            answer_mask)
+        text_input_ids, text_token_type_ids, text_tags, text_mask, phrase_masks = self.prepare_text(sentence1_ids,
+                                                                                                    sentence2_ids,
+                                                                                                    mask1,
+                                                                                                    mask2,
+                                                                                                    sentence1_tags,
+                                                                                                    sentence2_tags,
+                                                                                                    phrase1_mask,
+                                                                                                    phrase2_mask)
 
+        # Add visual feature to text elements
         if self.config.NETWORK.NO_GROUNDING:
             text_tags.zero_()
         text_visual_embeddings = self._collect_obj_reps(text_tags, obj_reps['obj_reps'])
+        # Add textual feature to image element
         if self.config.NETWORK.BLIND:
-            object_linguistic_embeddings = boxes.new_zeros(
-                (*boxes.shape[:-1], self.config.NETWORK.VLBERT.hidden_size))
-            object_linguistic_embeddings = object_linguistic_embeddings.unsqueeze(1).repeat(1, num_choices, 1, 1)
+            object_linguistic_embeddings = boxes.new_zeros((*boxes.shape[:-1], self.config.NETWORK.VLBERT.hidden_size))
         else:
-            if self.config.NETWORK.VLBERT.object_word_embed_mode in [1, 2]:
-                object_linguistic_embeddings = self.object_linguistic_embeddings(
-                    objects.long().clamp(min=0, max=self.object_linguistic_embeddings.weight.data.shape[0] - 1)
-                )
-                object_linguistic_embeddings = object_linguistic_embeddings.unsqueeze(1).repeat(1, num_choices, 1,
-                                                                                                1)
-            elif self.config.NETWORK.VLBERT.object_word_embed_mode == 3:
-                cls_id, sep_id = self.tokenizer.convert_tokens_to_ids(['[CLS]', '[SEP]'])
-                global_context_mask = text_mask & (text_input_ids != cls_id) & (text_input_ids != sep_id)
-                word_embedding = self.vlbert._module.word_embeddings(text_input_ids)
-                word_embedding[global_context_mask == 0] = 0
-                object_linguistic_embeddings = word_embedding.sum(dim=2) / global_context_mask.sum(dim=2,
-                                                                                                   keepdim=True).to(
-                    dtype=word_embedding.dtype)
-                object_linguistic_embeddings = object_linguistic_embeddings.unsqueeze(2).repeat((1, 1, max_len, 1))
-        object_vl_embeddings = torch.cat((obj_reps['obj_reps'].unsqueeze(1).repeat(1, num_choices, 1, 1),
-                                          object_linguistic_embeddings), -1)
+            object_linguistic_embeddings = self.object_linguistic_embeddings(
+                boxes.new_zeros((boxes.shape[0], boxes.shape[1])).long())
+        object_vl_embeddings = torch.cat((obj_reps['obj_reps'], object_linguistic_embeddings), -1)
 
         ###########################################
 
         # Visual Linguistic BERT
-
         if self.config.NETWORK.NO_OBJ_ATTENTION or self.config.NETWORK.BLIND:
             box_mask.zero_()
-
         hidden_states_text, hidden_states_objects, pooled_rep = self.vlbert(text_input_ids,
-                                                                          text_token_type_ids,
-                                                                          text_visual_embeddings,
-                                                                          text_mask,
-                                                                          object_vl_embeddings,
-                                                                          box_mask.unsqueeze(1).repeat(1,
-                                                                                                       num_choices,
-                                                                                                       1),
-                                                                          output_all_encoded_layers=False,
-                                                                          output_text_and_object_separately=True)
+                                                                            text_token_type_ids,
+                                                                            text_visual_embeddings,
+                                                                            text_mask,
+                                                                            object_vl_embeddings,
+                                                                            box_mask,
+                                                                            output_all_encoded_layers=False,
+                                                                            output_text_and_object_separately=True)
 
         ###########################################
 
-        # classifier
-        logits = self.final_mlp(pooled_rep).squeeze(2)
+        # sentence classification
+        sentence_logits = self.sentence_cls(pooled_rep)
 
-        outputs = {'label_logits': logits}
+        outputs = {'sentence_label_logits': sentence_logits}
 
         return outputs
+
 
 def test_module():
     from vgp.function.config import config, update_config

@@ -13,6 +13,6 @@ def do_validation(net, val_loader, metrics, label_index_in_batch):
         datas = [batch[i] for i in range(len(batch)) if i != label_index_in_batch % len(batch)]
 
         outputs = net(*datas)
-        outputs.update({'label': label})
+        outputs.update({'sentence_label': label})
         metrics.update(outputs)
 

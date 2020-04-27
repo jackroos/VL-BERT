@@ -18,7 +18,9 @@ DATASET:
   APPEND_INDEX: false
   DATASET_PATH: './data/vgp'
   ROOT_PATH: './'
-  CAPTIONS_SET: 'Sentences'
+  TRAIN_CAPTIONS_SET: 'train_captions'
+  VAL_CAPTIONS_SET: 'val_captions'
+  TEST_CAPTIONS_SET: 'test_captions'
   ROI_SET: 'Annotations'
   IMAGE_SET: 'flickr30k-images'
   TRAIN_ANNOTATION_FILE: 'full_data_type_phrase_pair_train.csv'

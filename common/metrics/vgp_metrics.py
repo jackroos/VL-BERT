@@ -1,5 +1,6 @@
 import torch
 from .eval_metric import EvalMetric
+import numpy as np
 
 
 class LossLogger(EvalMetric):
@@ -31,3 +32,13 @@ class Accuracy(EvalMetric):
                 label = label.view((-1, 4)).argmax(1)
             self.sum_metric += float((cls_logits.argmax(dim=1) == label).sum().item())
             self.num_inst += cls_logits.shape[0]
+
+
+def compute_metrics_sentence_level(metric, pred_probs, labels):
+    if metric == "accuracy":
+        pred_labels = np.zeros(labels)
+        pred_labels[pred_probs >= 0.5] = 1
+        result = (pred_labels == labels).mean()
+    else:
+        print("The metric {} has not been implemented".format(metric))
+    return result

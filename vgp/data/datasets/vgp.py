@@ -73,9 +73,9 @@ class VGPDataset(Dataset):
         if zip_mode:
             self.zipreader = ZipReader()
 
-        self.database = self.load_phrases(self.captions_set)
+        self.database = self.load_captions(self.captions_set)
 
-    def load_phrases(self, captions_set):
+    def load_captions(self, captions_set):
         database = []
         db_cache_name = 'vgp_nometa'
         db_cache_root = os.path.join(self.root_path, 'cache')
@@ -105,7 +105,10 @@ class VGPDataset(Dataset):
             # Create all pairs of captions that describe the same image
             for i in range(len(list_captions)):
                 for j in range(i):
+                    # create a unique id for each instance in the data set
+                    pair_id = "{}_{}_{}".format(str(k), str(i), str(j))
                     db_i = {
+                        'pair_id': pair_id,
                         'img_id': img_id,
                         'caption1': list_captions[i],
                         'caption2': list_captions[j],
@@ -123,12 +126,14 @@ class VGPDataset(Dataset):
             neg_captions = np.random.choice(open(neg_path).read().split("\n")[:-1], size=2, replace=False)
 
             # Create negative pairs
-            for caption in list_captions:
-                for wrong_caption in neg_captions:
+            for idx, caption in enumerate(list_captions):
+                for idx_bis, wrong_caption in enumerate(neg_captions):
                     # Randomly flip whether the wrong caption comes first or second, fix the seed for every image
                     np.random.seed(k)
                     flip = np.random.randint(2, size=1).astype(bool)[0]
+                    pair_id = "{}_{}_{}".format(str(k), str(idx), str(idx_bis + len(list_captions)))
                     db_i = {
+                        'pair_id': pair_id,
                         'img_id': img_id,
                         'label': 0,
                         'first_correct': not flip
