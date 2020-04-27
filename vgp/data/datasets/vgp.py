@@ -215,12 +215,10 @@ class VGPDataset(Dataset):
         # Add (later) mask to locate sub-phrases inside full sentence
 
         # Load label
-        label = torch.as_tensor(int(idb['label'])) if not self.test_mode else None
-
-        first_correct = torch.as_tensor(idb['first_correct']) if not self.test_mode else None
+        label = torch.as_tensor([int(idb['label']), int(idb['first_correct'])]) if not self.test_mode else None
 
         if not self.test_mode:
-            outputs = (image, boxes, final_input_1, final_input_2, im_info, label, first_correct)
+            outputs = (image, boxes, final_input_1, final_input_2, im_info, label)
         else:
             outputs = (image, boxes, final_input_1, final_input_2, im_info)
 
@@ -277,7 +275,7 @@ class VGPDataset(Dataset):
     @property
     def data_names(self):
         if not self.test_mode:
-            data_names = ['image', 'boxes', 'caption1', 'caption2', 'im_info', 'sentence_label', 'first_correct']
+            data_names = ['image', 'boxes', 'caption1', 'caption2', 'im_info', 'label']
         else:
             data_names = ['image', 'boxes', 'caption1', 'caption2', 'im_info']
 

@@ -182,8 +182,7 @@ class ResNetVLBERT(Module):
                       sentence1,
                       sentence2,
                       im_info,
-                      sentence_label,
-                      first_correct):
+                      label):
         ###########################################
         # visual feature extraction
 
@@ -221,6 +220,10 @@ class ResNetVLBERT(Module):
             phrase2_mask = sentence2[:, :, -1]
         else:
             phrase1_mask, phrase2_mask = None, None
+
+        sentence_label = label[:, 0].view(-1)
+        first_correct = label[:, 1].view(-1)
+
 
         ############################################
         

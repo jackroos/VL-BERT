@@ -33,10 +33,8 @@ class BatchCollator(object):
             out['caption2'] = clip_pad_2d(caption2, (max_caption2_length, len(caption2[0])), pad=0)
 
             out['im_info'] = ibatch[self.data_names.index('im_info')]
-            if 'sentence_label' in self.data_names:
-                out['sentence_label'] = ibatch[self.data_names.index('sentence_label')]
-            if 'first_correct' in self.data_names:
-                out['first_correct'] = ibatch[self.data_names.index('first_correct')]
+            if 'label' in self.data_names:
+                out['label'] = ibatch[self.data_names.index('label')]
 
             other_names = [data_name for data_name in self.data_names if data_name not in out]
             for name in other_names:
