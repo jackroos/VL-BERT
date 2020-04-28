@@ -21,9 +21,10 @@ from common.nlp.roberta import RobertaTokenizer
 
 
 class VGPDataset(Dataset):
-    def __init__(self, captions_set, ann_file, roi_set, image_set, root_path, data_path, transform=None,
-                 test_mode=False, zip_mode=False, cache_mode=False, cache_db=False, ignore_db_cache=True,
-                 basic_tokenizer=None, tokenizer=None, pretrained_model_name=None, add_image_as_a_box=True, **kwargs):
+    def __init__(self, captions_set, ann_file, roi_set, image_set, root_path, data_path, small_version=False,
+                 transform=None, test_mode=False, zip_mode=False, cache_mode=False, cache_db=False,
+                 ignore_db_cache=True, basic_tokenizer=None, tokenizer=None, pretrained_model_name=None,
+                 add_image_as_a_box=True, **kwargs):
         """
         Visual Grounded Paraphrase Dataset
 
@@ -49,6 +50,7 @@ class VGPDataset(Dataset):
         self.ann_file = os.path.join(data_path, ann_file)
         self.roi_set = os.path.join(data_path, roi_set)
         self.image_set = os.path.join(self.data_path, image_set)
+        self.small = small_version
         self.transform = transform
         self.test_mode = test_mode
         self.zip_mode = zip_mode
@@ -102,8 +104,14 @@ class VGPDataset(Dataset):
             path = os.path.join(captions_set, folder)
             list_captions = open(path).read().split("\n")[:-1]
 
-            # Create all pairs of captions that describe the same image
-            for i in range(len(list_captions)):
+            if self.small:
+                positive_captions = np.random.choice(list_captions, 2, replace=False)
+                n_negative = 1
+            else:
+                positive_captions = list_captions
+                n_negative = 2
+            # Create pairs of captions that describe the same image
+            for i in range(len(positive_captions)):
                 for j in range(i):
                     # create a unique id for each instance in the data set
                     pair_id = "{}_{}_{}".format(str(k), str(i), str(j))
@@ -116,35 +124,40 @@ class VGPDataset(Dataset):
                         'first_correct': True
                     }
                     database.append(db_i)
-            # Randomly select two captions from another image in order to have negative samples
+
+            # Randomly select one or two negative captions
             other_imgs = img_id_list[img_id_list != folder]
             # Fix the seed to have data set reproducibility
             np.random.seed(k)
             neg_image = np.random.choice(other_imgs, size=1)[0]
             np.random.seed(k)
             neg_path = os.path.join(captions_set, neg_image)
-            neg_captions = np.random.choice(open(neg_path).read().split("\n")[:-1], size=2, replace=False)
+            neg_captions = np.random.choice(open(neg_path).read().split("\n")[:-1], size=n_negative, replace=False)
 
             # Create negative pairs
-            for idx, caption in enumerate(list_captions):
-                for idx_bis, wrong_caption in enumerate(neg_captions):
-                    # Randomly flip whether the wrong caption comes first or second, fix the seed for every image
-                    np.random.seed(k)
-                    flip = np.random.randint(2, size=1).astype(bool)[0]
-                    pair_id = "{}_{}_{}".format(str(k), str(idx), str(idx_bis + len(list_captions)))
-                    db_i = {
-                        'pair_id': pair_id,
-                        'img_id': img_id,
-                        'label': 0,
-                        'first_correct': not flip
-                    }
-                    if flip:
-                        db_i['caption1'] = wrong_caption
-                        db_i['caption2'] = caption
-                    else:
-                        db_i['caption1'] = caption
-                        db_i['caption2'] = wrong_caption
-                    database.append(db_i)
+            for idx, caption in enumerate(positive_captions):
+                # if we want the small data set only create one negative pair
+                if self.small and idx > 0:
+                    break
+                else:
+                    for idx_bis, wrong_caption in enumerate(neg_captions):
+                        # Randomly flip whether the wrong caption comes first or second, fix the seed for every image
+                        np.random.seed(k + idx + idx_bis)
+                        flip = np.random.randint(2, size=1).astype(bool)[0]
+                        pair_id = "{}_{}_{}".format(str(k), str(idx), str(idx_bis + len(positive_captions)))
+                        db_i = {
+                            'pair_id': pair_id,
+                            'img_id': img_id,
+                            'label': 0,
+                            'first_correct': not flip
+                        }
+                        if flip:
+                            db_i['caption1'] = wrong_caption
+                            db_i['caption2'] = caption
+                        else:
+                            db_i['caption1'] = caption
+                            db_i['caption2'] = wrong_caption
+                        database.append(db_i)
         print('Done (t={:.2f}s)'.format(time.time() - tic))
 
         # cache database via cPickle

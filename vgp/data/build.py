@@ -53,6 +53,7 @@ def make_dataloader(cfg, dataset=None, mode='train', distributed=False, num_repl
         shuffle = cfg.TRAIN.SHUFFLE
         num_workers = cfg.NUM_WORKERS_PER_GPU * num_gpu
         captions_set = cfg.DATASET.TRAIN_CAPTIONS_SET
+        small_version = cfg.DATASET.SMALL
     elif mode == 'val':
         ann_file = cfg.DATASET.VAL_ANNOTATION_FILE
         num_gpu = len(cfg.GPUS.split(','))
@@ -60,6 +61,7 @@ def make_dataloader(cfg, dataset=None, mode='train', distributed=False, num_repl
         shuffle = cfg.VAL.SHUFFLE
         num_workers = cfg.NUM_WORKERS_PER_GPU * num_gpu
         captions_set = cfg.DATASET.VAL_CAPTIONS_SET
+        small_version = False
     else:
         ann_file = cfg.DATASET.TEST_ANNOTATION_FILE
         num_gpu = len(cfg.GPUS.split(','))
@@ -67,6 +69,7 @@ def make_dataloader(cfg, dataset=None, mode='train', distributed=False, num_repl
         shuffle = cfg.TEST.SHUFFLE
         num_workers = cfg.NUM_WORKERS_PER_GPU * num_gpu
         captions_set = cfg.DATASET.TEST_CAPTIONS_SET
+        small_version = False
 
     transform = build_transforms(cfg, mode)
 
@@ -104,8 +107,9 @@ def make_dataloader(cfg, dataset=None, mode='train', distributed=False, num_repl
         dataset = build_dataset(dataset_name=cfg.DATASET.DATASET, captions_set=captions_set,
                                 ann_file=ann_file, roi_set=cfg.DATASET.ROI_SET, image_set=cfg.DATASET.IMAGE_SET,
                                 root_path=cfg.DATASET.ROOT_PATH, data_path=cfg.DATASET.DATASET_PATH,
-                                transform=transform, test_mode=(mode == 'test'),  zip_mode=cfg.DATASET.ZIP_MODE,
-                                cache_mode=cfg.DATASET.CACHE_MODE, ignore_db_cache=cfg.DATASET.IGNORE_DB_CACHE,
+                                small_version=small_version, transform=transform, test_mode=(mode == 'test'),
+                                zip_mode=cfg.DATASET.ZIP_MODE, cache_mode=cfg.DATASET.CACHE_MODE,
+                                ignore_db_cache=cfg.DATASET.IGNORE_DB_CACHE,
                                 pretrained_model_name=cfg.NETWORK.BERT_MODEL_NAME,
                                 add_image_as_a_box=cfg.DATASET.ADD_IMAGE_AS_A_BOX,
                                 **kwargs)

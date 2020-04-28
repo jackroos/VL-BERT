@@ -42,6 +42,7 @@ _C.DATASET.ZIP_MODE = False
 _C.DATASET.CACHE_MODE = False
 _C.DATASET.IGNORE_DB_CACHE = True
 _C.DATASET.USE_PHRASAL_PARAPHRASES = False
+_C.DATASET.SMALL = False
 
 # ------------------------------------------------------------------------------------- #
 # Common network options
