@@ -18,7 +18,6 @@ def parse_args():
     parser.add_argument('--do-test', help='whether to generate csv result on test set',
                         default=True, action='store_true')
     parser.add_argument('--cudnn-off', help='disable cudnn', default=False, action='store_true')
-    parser.add_argument('--small', help='use small portion of VGP', default=False)
 
     # easy test pretrain model
     parser.add_argument('--partial-pretrain', type=str)
@@ -45,9 +44,6 @@ def parse_args():
         os.environ['WORLD_SIZE'] = str(ntasks)
         os.environ['RANK'] = str(proc_id)
         os.environ['LOCAL_RANK'] = str(proc_id % num_gpus)
-
-    if args.small:
-        config.DATASET.SMALL = True
 
     return args, config
 
