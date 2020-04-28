@@ -161,6 +161,8 @@ class VGPDataset(Dataset):
 
     def __getitem__(self, index):
         idb = deepcopy(self.database[index])
+        import pdb
+        pdb.set_trace()
 
         # Load image and regions of interest
         img_id = idb['img_id']
@@ -288,7 +290,7 @@ def test_vgp():
     roi_set = "Annotations"
     root_path = ""
     data_path = os.path.join(os.getcwd(), "data/vgp/")
-    dataset = VGPDataset(captions_set="Sentences", ann_file=ann_file, roi_set=roi_set, image_set=image_set,
+    dataset = VGPDataset(captions_set="train_captions", ann_file=ann_file, roi_set=roi_set, image_set=image_set,
                          root_path=root_path, data_path=data_path)
     print(len(dataset.__getitem__(0)))
 

@@ -188,9 +188,9 @@ class ResNetVLBERT(Module):
 
         # Don't know what segments are for
         # segms = masks
-
+        
         # For now use all boxes
-        box_mask = torch.ones(boxes[:, :, -1].size(), dtype=torch.uint8)
+        box_mask = torch.ones(boxes[:, :, -1].size(), dtype=torch.uint8, device=boxes.device)
 
         max_len = int(box_mask.sum(1).max().item())
         box_mask = box_mask[:, :max_len]
@@ -267,13 +267,13 @@ class ResNetVLBERT(Module):
         outputs = {}
         
         # sentence classification
-        sentence_logits = self.sentence_cls(pooled_rep)
+        sentence_logits = self.sentence_cls(pooled_rep).view(-1)
         
         # loss on paraphrase discrimination
-        sentence_cls_loss = F.binary_cross_entropy_with_logits(sentence_logits.view(-1), sentence_label.type(torch.float32))
+        sentence_cls_loss = F.binary_cross_entropy_with_logits(sentence_logits, sentence_label.type(torch.float32))
 
         outputs.update({'sentence_label_logits': sentence_logits,
-                        'sentence_label': sentence_label.long().view(-1),
+                        'sentence_label': sentence_label.long(),
                         'sentence_cls_loss': sentence_cls_loss})
 
         # phrasal paraphrases classification (later)
@@ -373,7 +373,7 @@ class ResNetVLBERT(Module):
         ###########################################
 
         # sentence classification
-        sentence_logits = self.sentence_cls(pooled_rep)
+        sentence_logits = self.sentence_cls(pooled_rep).view(-1)
 
         outputs = {'sentence_label_logits': sentence_logits}
 

@@ -38,7 +38,7 @@ def train_net(args, config):
     # setup logger
     logger, final_output_path = create_logger(config.OUTPUT_PATH,
                                               args.cfg,
-                                              config.DATASET.TRAIN_IMAGE_SET,
+                                              config.DATASET.IMAGE_SET,
                                               split='train')
     model_prefix = os.path.join(final_output_path, config.MODEL_PREFIX)
     if args.log_dir is None:

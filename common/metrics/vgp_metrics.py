@@ -27,10 +27,10 @@ class Accuracy(EvalMetric):
             _filter = outputs['sentence_label'] != -1
             cls_logits = outputs['sentence_label_logits'][_filter]
             label = outputs['sentence_label'][_filter]
-            if cls_logits.dim() == 1:
-                cls_logits = cls_logits.view((-1, 4))
-                label = label.view((-1, 4)).argmax(1)
-            self.sum_metric += float((cls_logits.argmax(dim=1) == label).sum().item())
+            if cls_logits.dim() == 2:
+                cls_logits = cls_logits.view(-1)
+                label = label.view(-1)
+            self.sum_metric += float(((cls_logits > 0.5).float() == label.float()).sum().item())
             self.num_inst += cls_logits.shape[0]
 
 
