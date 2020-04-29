@@ -174,8 +174,6 @@ class VGPDataset(Dataset):
 
     def __getitem__(self, index):
         idb = deepcopy(self.database[index])
-        import pdb
-        pdb.set_trace()
 
         # Load image and regions of interest
         img_id = idb['img_id']

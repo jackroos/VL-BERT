@@ -301,7 +301,7 @@ class ResNetVLBERT(Module):
         # segms = masks
 
         # For now use all boxes
-        box_mask = torch.ones(boxes[:, :, -1].size(), dtype=torch.uint8)
+        box_mask = torch.ones(boxes[:, :, -1].size(), dtype=torch.uint8, device=boxes.device)
 
         max_len = int(box_mask.sum(1).max().item())
         box_mask = box_mask[:, :max_len]
