@@ -15,6 +15,7 @@ from PIL import Image
 from sklearn.neighbors import NearestNeighbors
 
 from common.backbone.resnet.resnet import resnet101
+from common.utils.clip_pad import *
 from vgp.data.transforms.build import build_transforms
 
 
@@ -36,6 +37,26 @@ def parseArguments():
     args = parser.parse_args()
 
     return args
+
+
+class BatchCollator(object):
+    def __init__(self, dataset):
+        self.dataset = dataset
+        self.test_mode = self.dataset.test_mode
+
+    def __call__(self, batch):
+        if not isinstance(batch, list):
+            batch = list(batch)
+
+        max_shape = tuple(max(s) for s in zip(*[data.shape for data in batch]))
+
+        batch = [clip_pad_images(image, max_shape, pad=0) for image in batch]
+
+        out_tuple = (batch, )
+
+        return out_tuple
+
+
 
 
 class Flickr30k_imgDataset(Dataset):
@@ -72,8 +93,11 @@ def get_img_features(captions_path, img_path, model_path, batch_size):
     cfg = create_cfg()
     transform = build_transforms(cfg, mode="test")
     dataset = Flickr30k_imgDataset(captions_path, img_path, transform)
-    dataloader = DataLoader(dataset=dataset, batch_size=batch_size, pin_memory=False, drop_last=False, shuffle=False)
-    model = resnet101(pretrained=True, pretrained_model_path=model_path, expose_stages=[4], stride_in_1x1=True).eval()
+    batch_collator = BatchCollator(dataset)
+    dataloader = DataLoader(dataset=dataset, batch_size=batch_size, collate_fn=batch_collator, pin_memory=False,
+                            drop_last=False, shuffle=False)
+    model = resnet101(pretrained=True, pretrained_model_path=model_path, expose_stages=[4],
+                      stride_in_1x1=True).eval()
     img_features = []
     for batch in dataloader:
         features = model(batch).float().numpy()
