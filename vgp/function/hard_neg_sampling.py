@@ -2,6 +2,10 @@ import sys
 import os
 import argparse
 
+root_path = os.path.abspath(os.getcwd())
+if root_path not in sys.path:
+    sys.path.append(root_path)
+
 from easydict import EasyDict as edict
 from torch.utils.data import DataLoader
 from torch.utils.data import Dataset
@@ -24,9 +28,9 @@ def parseArguments():
     parser.add_argument("modelpath", help="Path to pretained model parameters", type=str)
 
     # Optional arguments
-    parser.add_argument("-b", "bs", help="Batch size", type=int, default=64)
-    parser.add_argument("-n", "nn", help="Number of nearest neighbors to use", type=int, default=100)
-    parser.add_argument("-ex", "reextract", help="Whether to ignore saved image features", action="store_true")
+    parser.add_argument("-b", "--bs", help="Batch size", type=int, default=64)
+    parser.add_argument("-n", "--nn", help="Number of nearest neighbors to use", type=int, default=100)
+    parser.add_argument("-ex", "--reextract", help="Whether to ignore saved image features", action="store_true")
 
     # Parse arguments
     args = parser.parse_args()
@@ -46,7 +50,7 @@ class Flickr30k_imgDataset(Dataset):
         img_id = self.ids[index]
         image = Image.open(os.path.join(self.img_path, img_id + ".jpg"))
         if self.transform is not None:
-            image = self.transform(image)
+            image, _, _, _ = self.transform(image, None, None, None)
         return image
 
     def __len__(self):
