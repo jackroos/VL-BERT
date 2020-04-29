@@ -59,10 +59,12 @@ class Resize(object):
         image = F.resize(image, (size[1], size[0]))
 
         ratios = [size[0] * 1.0 / origin_size[0], size[1] * 1.0 / origin_size[1]]
-        boxes[:, [0, 2]] *= ratios[0]
-        boxes[:, [1, 3]] *= ratios[1]
-        im_info[0], im_info[1] = image.size
-        im_info[2], im_info[3] = ratios
+        if boxes is not None:
+            boxes[:, [0, 2]] *= ratios[0]
+            boxes[:, [1, 3]] *= ratios[1]
+        if im_info is not None:
+            im_info[0], im_info[1] = image.size
+            im_info[2], im_info[3] = ratios
         return image, boxes, masks, im_info
 
 
