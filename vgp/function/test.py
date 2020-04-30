@@ -33,7 +33,7 @@ except ImportError:
 @torch.no_grad()
 def test_net(args, config, ckpt_path=None, save_path=None, save_name=None):
     if save_path is None:
-        logger, test_output_path = create_logger(config.OUTPUT_PATH, args.cfg, config.DATASET.TEST_IMAGE_SET,
+        logger, test_output_path = create_logger(config.OUTPUT_PATH, args.cfg, config.DATASET.IMAGE_SET,
                                                  split='test')
         save_path = test_output_path
     if save_name is None:
