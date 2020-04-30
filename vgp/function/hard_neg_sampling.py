@@ -107,7 +107,7 @@ def get_img_features(captions_path, img_path, model_path, batch_size):
 
 
 def main(captions_path, img_path, model_path, batch_size, n_neighbors, use_saved=True):
-    list_ids = [file[:-4] for file in os.listdir(captions_path)]
+    list_ids = [file[:-4] for file in os.listdir(captions_path)  if file.endswith(".txt")]
     if os.path.exists(os.path.join(captions_path, "extracted_img_features.npy")) and use_saved:
         print("loading saved features")
         img_features = np.load(os.path.join(captions_path, "extracted_img_features.npy"))
