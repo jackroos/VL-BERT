@@ -7,6 +7,7 @@ if root_path not in sys.path:
     sys.path.append(root_path)
 
 from easydict import EasyDict as edict
+import torch.nn as nn
 from torch.utils.data import DataLoader
 from torch.utils.data import Dataset
 import numpy as np
@@ -42,19 +43,13 @@ def parseArguments():
 class BatchCollator(object):
     def __init__(self, dataset):
         self.dataset = dataset
-        self.test_mode = self.dataset.test_mode
 
     def __call__(self, batch):
-        if not isinstance(batch, list):
-            batch = list(batch)
-
+        
         max_shape = tuple(max(s) for s in zip(*[data.shape for data in batch]))
-
-        batch = [clip_pad_images(image, max_shape, pad=0) for image in batch]
-
-        out_tuple = (batch, )
-
-        return out_tuple
+        batch = torch.cat([clip_pad_images(image, max_shape, pad=0).unsqueeze(0) for image in batch])
+        
+        return batch
 
 
 
@@ -86,6 +81,8 @@ def create_cfg():
     cfg.NETWORK = edict()
     cfg.NETWORK.PIXEL_MEANS = (102.9801, 115.9465, 122.7717)
     cfg.NETWORK.PIXEL_STDS = (1.0, 1.0, 1.0)
+    cfg.DATASET = edict()
+    cfg.DATASET.FIX_PADDING = True
     return cfg
 
 
@@ -96,26 +93,30 @@ def get_img_features(captions_path, img_path, model_path, batch_size):
     batch_collator = BatchCollator(dataset)
     dataloader = DataLoader(dataset=dataset, batch_size=batch_size, collate_fn=batch_collator, pin_memory=False,
                             drop_last=False, shuffle=False)
-    model = resnet101(pretrained=True, pretrained_model_path=model_path, expose_stages=[4],
-                      stride_in_1x1=True).eval()
+    model = resnet101(pretrained=True, pretrained_model_path=model_path, expose_stages=[5],
+                      stride_in_1x1=True).eval().cuda()
+    avg_pooler = nn.AdaptiveAvgPool2d((1, 1))
     img_features = []
     for batch in dataloader:
-        features = model(batch).float().numpy()
+        batch = batch.cuda(non_blocking=True)
+        features = avg_pooler(model(batch)['body5']).detach().float().cpu().numpy()
         img_features.append(features)
-    img_features = np.concatenate(img_features, axis=0)
+    img_features = np.concatenate(img_features, axis=0).squeeze()
     np.save(os.path.join(captions_path, "extracted_img_features"), img_features)
     return img_features
 
 
 def main(captions_path, img_path, model_path, batch_size, n_neighbors, use_saved=True):
     list_ids = [file[:-4] for file in os.listdir(captions_path)]
-    if os.path.exists(os.path.join(captions_path, "extracted_img_features")) and use_saved:
+    if os.path.exists(os.path.join(captions_path, "extracted_img_features.npy")) and use_saved:
+        print("loading saved features")
         img_features = np.load(os.path.join(captions_path, "extracted_img_features.npy"))
     else:
+        print("image features not found, start extracting them")
         img_features = get_img_features(captions_path, img_path, model_path, batch_size)
     nbrs = NearestNeighbors(n_neighbors=n_neighbors, algorithm='ball_tree').fit(img_features)
     nearest_imgs = nbrs.kneighbors(img_features, return_distance=False)
-    result = np.concatenate((np.array(list_ids), nearest_imgs), axis=1)
+    result = np.concatenate((np.array(list_ids).reshape((-1, 1)), nearest_imgs), axis=1)
     column_names = ["img_id"] + [str(k) for k in range(1, n_neighbors + 1)]
     nearest_imgs_df = pd.DataFrame(result, columns=column_names)
     nearest_imgs_df.to_csv(os.path.join(captions_path, "similarities.csv"))

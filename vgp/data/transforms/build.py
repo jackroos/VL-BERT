@@ -19,14 +19,13 @@ def build_transforms(cfg, mode='train'):
     normalize_transform = T.Normalize(
         mean=cfg.NETWORK.PIXEL_MEANS, std=cfg.NETWORK.PIXEL_STDS, to_bgr255=to_bgr255
     )
-
-    transform = T.Compose(
-        [
-            T.Resize(min_size, max_size),
-            T.RandomHorizontalFlip(flip_prob),
-            T.ToTensor(),
-            normalize_transform,
-            # T.FixPadding(min_size, max_size, pad=0)
-        ]
-    )
+    transformations = [
+        T.Resize(min_size, max_size),
+        T.RandomHorizontalFlip(flip_prob),
+        T.ToTensor(),
+        normalize_transform
+    ]
+    if cfg.DATASET.FIX_PADDING:
+        transformations.append(T.FixPadding(min_size, max_size, pad=0))
+    transform = T.Compose(transformations)
     return transform
