@@ -58,7 +58,7 @@ class Flickr30k_imgDataset(Dataset):
     def __init__(self, captions_path, img_path, transform):
         super(Flickr30k_imgDataset, self).__init__()
 
-        self.ids = [file[:-4] for file in os.listdir(captions_path)]
+        self.ids = [file[:-4] for file in os.listdir(captions_path) if file.endswith(".txt")]
         self.img_path = img_path
         self.transform = transform
 
