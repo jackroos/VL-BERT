@@ -42,7 +42,7 @@ def test_net(args, config, ckpt_path=None, save_path=None, save_name=None):
         os.makedirs(save_path)
     result_csv_path = os.path.join(save_path,
                                    '{}_test_result.csv'.format(save_name))
-    if not(args.use_cache and os.path.isfile(result_csv_path)):
+    if args.repredict or not os.path.isfile(result_csv_path):
         print('test net...')
         pprint.pprint(args)
         pprint.pprint(config)

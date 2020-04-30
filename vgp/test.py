@@ -16,7 +16,7 @@ def parse_args():
     parser.add_argument('--result-path', type=str, help='path to store test result csv file.', default='./test_result')
     parser.add_argument('--result-name', type=str)
     parser.add_argument('--fp16', default=False, action='store_true')
-    parser.add_argument('--use-cache', default=False, action='store_true')
+    parser.add_argument('-pred', '--repredict', default=False, action='store_true')
 
     args = parser.parse_args()
 
