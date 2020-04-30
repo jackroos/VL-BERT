@@ -86,10 +86,11 @@ def test_net(args, config, ckpt_path=None, save_path=None, save_name=None):
         sentence_labels = []
         cur_id = 0
         model.eval()
-        for nbatch, batch in zip(trange(len(test_loader)), test_loader):
+        for batch in test_loader:
             batch = to_cuda(batch)
             output = model(*batch)
             probs = torch.sigmoid(output['sentence_label_logits'].float()).detach().cpu().numpy()
+            test_probs.append(probs)
             batch_size = probs.shape[0]
             sentence_labels.append([test_database[cur_id + k]['label'] for k in range(batch_size)])
             test_ids.append([test_database[cur_id + k]['pair_id'] for k in range(batch_size)])

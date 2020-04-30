@@ -36,7 +36,7 @@ class Accuracy(EvalMetric):
 
 def compute_metrics_sentence_level(metric, pred_probs, labels):
     if metric == "accuracy":
-        pred_labels = np.zeros(labels)
+        pred_labels = np.zeros_like(labels)
         pred_labels[pred_probs >= 0.5] = 1
         result = (pred_labels == labels).mean()
     else:
