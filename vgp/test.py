@@ -21,7 +21,7 @@ def parse_args():
     args = parser.parse_args()
 
     if args.cfg is not None:
-        config.update(deepcopy(args.cfg))
+        update_config(args.cfg)
     if args.bs is not None:
         config.TEST.BATCH_IMAGES = args.bs
 

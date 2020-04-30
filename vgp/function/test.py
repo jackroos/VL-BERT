@@ -90,8 +90,8 @@ def test_net(args, config, ckpt_path=None, save_path=None, save_name=None):
             batch = to_cuda(batch)
             output = model(*batch)
             probs = torch.sigmoid(output['sentence_label_logits'].float()).detach().cpu().numpy()
-            sentence_labels.append([test_database[cur_id + k]['label'] for k in range(batch_size)])
             batch_size = probs.shape[0]
+            sentence_labels.append([test_database[cur_id + k]['label'] for k in range(batch_size)])
             test_ids.append([test_database[cur_id + k]['pair_id'] for k in range(batch_size)])
             cur_id += batch_size
         test_probs = np.concatenate(test_probs, axis=0)
