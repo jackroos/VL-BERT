@@ -56,7 +56,7 @@ def test_net(args, config, ckpt_path=None, save_path=None, save_name=None):
             ckpt_path = '{}-best.model'.format(model_prefix)
             print('Use best checkpoint {}...'.format(ckpt_path))
 
-        shutil.copy2(ckpt_path, os.path.join(save_path, '{}_test_ckpt_{}.model'.format(config.MODEL_PREFIX, config.DATASET.TASK)))
+        shutil.copy2(ckpt_path, os.path.join(save_path, '{}_test_ckpt.model'.format(config.MODEL_PREFIX)))
 
         # torch.backends.cudnn.enabled = False
         # torch.backends.cudnn.deterministic = True
