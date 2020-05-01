@@ -107,9 +107,9 @@ def make_dataloader(cfg, dataset=None, mode='train', distributed=False, num_repl
         dataset = build_dataset(dataset_name=cfg.DATASET.DATASET, captions_set=captions_set,
                                 ann_file=ann_file, roi_set=cfg.DATASET.ROI_SET, image_set=cfg.DATASET.IMAGE_SET,
                                 root_path=cfg.DATASET.ROOT_PATH, data_path=cfg.DATASET.DATASET_PATH,
-                                small_version=small_version, transform=transform, test_mode=(mode == 'test'),
-                                zip_mode=cfg.DATASET.ZIP_MODE, cache_mode=cfg.DATASET.CACHE_MODE,
-                                ignore_db_cache=cfg.DATASET.IGNORE_DB_CACHE,
+                                small_version=small_version, negative_sampling=cfg.DATASET.NEGATIVE_SAMPLING,
+                                transform=transform, test_mode=(mode == 'test'), zip_mode=cfg.DATASET.ZIP_MODE,
+                                cache_mode=cfg.DATASET.CACHE_MODE, ignore_db_cache=cfg.DATASET.IGNORE_DB_CACHE,
                                 pretrained_model_name=cfg.NETWORK.BERT_MODEL_NAME,
                                 add_image_as_a_box=cfg.DATASET.ADD_IMAGE_AS_A_BOX,
                                 **kwargs)

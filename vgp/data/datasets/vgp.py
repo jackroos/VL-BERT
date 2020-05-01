@@ -4,6 +4,7 @@ import _pickle as cPickle
 from PIL import Image
 from copy import deepcopy
 import numpy as np
+import pandas as pd
 import xml.etree.ElementTree as ET
 
 import sys
@@ -18,12 +19,14 @@ from external.pytorch_pretrained_bert import BertTokenizer, BasicTokenizer
 from common.utils.zipreader import ZipReader
 from common.utils.create_logger import makedirsExist
 from common.nlp.roberta import RobertaTokenizer
+from vgp.function.hard_neg_sampling import main
+
 
 
 class VGPDataset(Dataset):
     def __init__(self, captions_set, ann_file, roi_set, image_set, root_path, data_path, small_version=False,
-                 transform=None, test_mode=False, zip_mode=False, cache_mode=False, cache_db=False,
-                 ignore_db_cache=True, basic_tokenizer=None, tokenizer=None, pretrained_model_name=None,
+                 negative_sampling='hard', transform=None, test_mode=False, zip_mode=False, cache_mode=False,
+                 cache_db=False, ignore_db_cache=True, basic_tokenizer=None, tokenizer=None, pretrained_model_name=None,
                  add_image_as_a_box=True, **kwargs):
         """
         Visual Grounded Paraphrase Dataset
@@ -51,6 +54,7 @@ class VGPDataset(Dataset):
         self.roi_set = os.path.join(data_path, roi_set)
         self.image_set = os.path.join(self.data_path, image_set)
         self.small = small_version
+        self.neg_sampling = negative_sampling
         self.transform = transform
         self.test_mode = test_mode
         self.zip_mode = zip_mode
@@ -98,6 +102,13 @@ class VGPDataset(Dataset):
         # ignore or not find cached database, reload it from annotation file
         print('loading database from {} and creating pairs...'.format(captions_set))
         tic = time.time()
+        if self.neg_sampling == "hard":
+            path_similarities = os.path.join(self.captions_set, "similarities.csv")
+            if not os.path.exists(path_similarities):
+                print("It seems hard negative mining has not been done for this set of captions, run it now")
+                model_path = os.path.join(os.getcwd(), "model/pretrained_model/resnet101-pt-vgbua-0000.model")
+                main(self.captions_set, self.image_set, model_path, batch_size=4, n_neighbors=20, use_saved=True)
+            similarities_df = pd.read_csv(path_similarities)
         img_id_list = np.array(os.listdir(captions_set))
         for k, folder in enumerate(img_id_list):
             if folder.endswith(".txt"):
@@ -126,16 +137,24 @@ class VGPDataset(Dataset):
                         }
                         database.append(db_i)
 
-                # Randomly select one or two negative captions
-                other_imgs = img_id_list[img_id_list != folder]
-                # Fix the seed to have data set reproducibility
-                np.random.seed(k)
-                neg_image = np.random.choice(other_imgs, size=1)[0]
-                np.random.seed(k)
-                neg_path = os.path.join(captions_set, neg_image)
-                neg_captions = np.random.choice(open(neg_path).read().split("\n")[:-1], size=n_negative, replace=False)
+                # Select one or two negative captions
+                if self.neg_sampling == 'random':
+                    other_imgs = img_id_list[img_id_list != folder]
+                    # Fix the seed to have data set reproducibility
+                    np.random.seed(k)
+                    neg_image = np.random.choice(other_imgs, size=1)[0]
+                    np.random.seed(k)
+                    neg_path = os.path.join(captions_set, neg_image)
+                else:
+                    if self.neg_sampling != "hard":
+                        print("{} negative sampling is not supported, hard negative sampling will "
+                              "be used".format(self.neg_sampling))
+                    similar_img = similarities_df[similarities_df["img_id"] == int(img_id)]["2"].values[0]
+                    neg_path = os.path.join(captions_set, str(similar_img) + ".jpg")
 
                 # Create negative pairs
+                neg_captions = np.random.choice(open(neg_path).read().split("\n")[:-1], size=n_negative,
+                                                replace=False)
                 for idx, caption in enumerate(positive_captions):
                     # if we want the small data set only create one negative pair
                     if self.small and idx > 0:

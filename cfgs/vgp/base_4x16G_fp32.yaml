@@ -31,7 +31,8 @@ DATASET:
   CACHE_MODE: false
   IGNORE_DB_CACHE: true
   USE_PHRASAL_PARAPHRASES: false
-  SMALL: true
+  SMALL: false
+  NEGATIVE_SAMPLING: 'hard'
 
 NETWORK:
   PARTIAL_PRETRAIN: "./model/pretrained_model/vl-bert-base-e2e.model"

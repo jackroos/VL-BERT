@@ -43,6 +43,7 @@ _C.DATASET.CACHE_MODE = False
 _C.DATASET.IGNORE_DB_CACHE = True
 _C.DATASET.USE_PHRASAL_PARAPHRASES = False
 _C.DATASET.SMALL = False
+_C.DATASET.NEGATIVE_SAMPLING = 'hard'
 _C.DATASET.FIX_PADDING = False
 
 # ------------------------------------------------------------------------------------- #
