@@ -16,6 +16,7 @@ scipy
 tensorboard
 tensorboardX
 tensorflow
+torchvision==0.3.0
 tqdm
 urllib3
 boto3
