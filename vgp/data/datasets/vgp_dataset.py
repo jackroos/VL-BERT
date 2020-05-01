@@ -149,8 +149,9 @@ class VGPDataset(Dataset):
                     if self.neg_sampling != "hard":
                         print("{} negative sampling is not supported, hard negative sampling will "
                               "be used".format(self.neg_sampling))
-                    similar_img = similarities_df[similarities_df["img_id"] == int(img_id)]["2"].values[0]
-                    neg_path = os.path.join(captions_set, str(similar_img) + ".jpg")
+                    similar_img_idx = similarities_df[similarities_df["img_id"] == int(img_id)]["2"].values[0]
+                    neg_img = similarities_df.iloc[similar_img_idx]["img_id"]
+                    neg_path = os.path.join(captions_set, str(neg_img) + ".txt")
 
                 # Create negative pairs
                 neg_captions = np.random.choice(open(neg_path).read().split("\n")[:-1], size=n_negative,

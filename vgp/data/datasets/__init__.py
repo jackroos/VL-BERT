@@ -1,3 +1,3 @@
-from .vgp import VGPDataset
+from .vgp_dataset import VGPDataset
 
 
