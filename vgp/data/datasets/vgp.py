@@ -324,7 +324,7 @@ def test_vgp():
     root_path = ""
     data_path = os.path.join(os.getcwd(), "data/vgp/")
     dataset = VGPDataset(captions_set="train_captions", ann_file=ann_file, roi_set=roi_set, image_set=image_set,
-                         root_path=root_path, data_path=data_path)
+                         small_version=True, negative_sampling='hard', root_path=root_path, data_path=data_path)
     print(len(dataset.__getitem__(0)))
 
 
