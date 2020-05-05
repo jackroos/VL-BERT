@@ -22,6 +22,7 @@ class ResNetVLBERT(Module):
         super(ResNetVLBERT, self).__init__(config)
         self.enable_cnn_reg_loss = config.NETWORK.ENABLE_CNN_REG_LOSS
         self.cnn_loss_top = config.NETWORK.CNN_LOSS_TOP
+        self.align_caption_img = config.DATASET.ALIGN_CAPTION_IMG
         self.use_phrasal_paraphrases = config.DATASET.USE_PHRASAL_PARAPHRASES
         if not config.NETWORK.BLIND:
             self.image_feature_extractor = FastRCNN(config,
@@ -75,7 +76,13 @@ class ResNetVLBERT(Module):
                 torch.nn.Linear(dim, 1)
             )
         else:
-            raise ValueError("Not support classifier type: {}!".format(config.NETWORK.SENTENCE.CLASSIFIER_TYPE))
+            raise ValueError("Classifier type: {} not supported!".format(config.NETWORK.SENTENCE.CLASSIFIER_TYPE))
+
+        if self.align_caption_img:
+            self.caption_img_aligner = torch.nn.Sequential(
+                torch.nn.Dropout(config.NETWORK.SENTENCE.CLASSIFIER_DROPOUT, inplace=False),
+                torch.nn.Linear(dim, 1)
+            )
 
         if self.use_phrasal_paraphrases:
             if config.NETWORK.PHRASE.CLASSIFIER_TYPE == "2fc":
@@ -92,7 +99,7 @@ class ResNetVLBERT(Module):
                     torch.nn.Linear(4*dim, 5)
                 )
             else:
-                raise ValueError("Not support classifier type: {}!".format(config.NETWORK.PHRASE.CLASSIFIER_TYPE))
+                raise ValueError("Classifier type: {} not supported!".format(config.NETWORK.PHRASE.CLASSIFIER_TYPE))
 
         # init weights
         self.init_weight()
@@ -268,13 +275,21 @@ class ResNetVLBERT(Module):
         
         # sentence classification
         sentence_logits = self.sentence_cls(pooled_rep).view(-1)
-        
-        # loss on paraphrase discrimination
         sentence_cls_loss = F.binary_cross_entropy_with_logits(sentence_logits, sentence_label.type(torch.float32))
 
         outputs.update({'sentence_label_logits': sentence_logits,
                         'sentence_label': sentence_label.long(),
                         'sentence_cls_loss': sentence_cls_loss})
+
+        # Align the correct caption with the image when only one caption describes the input image
+        alignment_loss = torch.tensor([0], dtype=torch.float32)
+        if self.align_caption_img:
+            alignment_logits = self.caption_img_aligner(pooled_rep).view(-1)
+            alignment_loss = F.binary_cross_entropy_with_logits(alignment_logits[1 - sentence_label],
+                                                                first_correct[1 - sentence_label].type(torch.float32))
+            outputs.update({'alignment_logits': alignment_logits,
+                            'first_correct': first_correct,
+                            'alignment_loss': alignment_loss})
 
         # phrasal paraphrases classification (later)
         phrase_cls_loss = torch.tensor([0], dtype=torch.float32)
@@ -284,7 +299,8 @@ class ResNetVLBERT(Module):
         # final_rep = torch.cat((h_rep_ph1, h_rep_ph2, torch.abs(h_rep_ph2 - h_rep_ph1), torch.mul(h_rep_ph1, h_rep_ph2)),
         #                       axis=1)
 
-        loss = sentence_cls_loss.mean() + self.config.NETWORK.PHRASE_LOSS_WEIGHT * phrase_cls_loss.mean()
+        loss = sentence_cls_loss.mean() + self.config.NETWORK.PHRASE_LOSS_WEIGHT * phrase_cls_loss.mean() + \
+            self.config.NETWORK.ALIGNMENT_LOSS_WEIGHT * alignment_loss.mean()
 
         return outputs, loss
 
@@ -371,11 +387,15 @@ class ResNetVLBERT(Module):
                                                                             output_text_and_object_separately=True)
 
         ###########################################
-
+        outputs = {}
         # sentence classification
         sentence_logits = self.sentence_cls(pooled_rep).view(-1)
+        outputs.update({'sentence_label_logits': sentence_logits})
 
-        outputs = {'sentence_label_logits': sentence_logits}
+        # Align the correct caption with the image when only one caption describes the input image
+        if self.align_caption_img:
+            alignment_logits = self.caption_img_aligner(pooled_rep).view(-1)
+            outputs.update({'alignment_logits': alignment_logits})
 
         return outputs
 
