@@ -1,8 +1,8 @@
 ---
 RNG_SEED: 12345
-OUTPUT_PATH: './output/vl-bert/vgp'
+OUTPUT_PATH: './output/vl-bert/vgp/version2_hard_aligncaptimg/'
 MODULE: ResNetVLBERT
-GPUS: '0,1,2,3,4,5,6,7'
+GPUS: '0,1,2,3,4,5'
 LOG_FREQUENT: 100
 VAL_FREQUENT: 1
 CHECKPOINT_FREQUENT: 1
@@ -33,6 +33,7 @@ DATASET:
   USE_PHRASAL_PARAPHRASES: false
   SMALL: false
   NEGATIVE_SAMPLING: 'hard'
+  ALIGN_CAPTION_IMG: true
 
 NETWORK:
   PARTIAL_PRETRAIN: "./model/pretrained_model/vl-bert-base-e2e.model"
