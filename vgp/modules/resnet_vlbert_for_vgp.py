@@ -285,7 +285,7 @@ class ResNetVLBERT(Module):
         alignment_loss = torch.tensor([0], dtype=torch.float32)
         if self.align_caption_img:
             alignment_logits = self.caption_img_aligner(pooled_rep).view(-1)
-            if sentence_label.sum() == sentence_label.shape.item():  # Loss is 0 when all samples are positive
+            if sentence_label.sum() == sentence_label.shape[0]:  # Loss is 0 when all samples are positive
                 alignment_loss = torch.tensor([0], dtype=torch.float32)
             else:
                 alignment_loss = F.binary_cross_entropy_with_logits(alignment_logits[1 - sentence_label],
