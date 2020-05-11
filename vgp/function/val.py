@@ -14,4 +14,6 @@ def do_validation(net, val_loader, metrics, label_index_in_batch):
 
         outputs = net(*datas)
         outputs.update({'sentence_label': label[:, 0].view(-1)})
+        if net.align_caption_img:
+            outputs.update({'alignment_label': label[:, 1].view(-1)})
         metrics.update(outputs)

@@ -81,7 +81,9 @@ def test_net(args, config, ckpt_path=None, save_path=None, save_name=None):
         test_database = test_dataset.database
 
         # test
-        test_probs = []
+        sentence_logits = []
+        alignment_logits = []
+        alignment_labels = []
         test_ids = []
         sentence_labels = []
         cur_id = 0
@@ -89,33 +91,49 @@ def test_net(args, config, ckpt_path=None, save_path=None, save_name=None):
         for batch in test_loader:
             batch = to_cuda(batch)
             output = model(*batch)
-            probs = torch.sigmoid(output['sentence_label_logits'].float()).detach().cpu().numpy()
-            test_probs.append(probs)
-            batch_size = probs.shape[0]
-            sentence_labels.append([test_database[cur_id + k]['label'] for k in range(batch_size)])
+            sentence_logits.append(torch.sigmoid(output['sentence_label_logits'].float()).detach().cpu().numpy())
+            batch_size = batch[0].shape[0]
+            sentence_labels.append([test_database[cur_id + k]['label'][:, 0] for k in range(batch_size)])
+            if config.DATASET.ALIGN_CAPTION_IMG:
+                alignment_logits.append(torch.sigmoid(output['alignment_logits'].float()).detach().cpu().numpy())
+                alignment_labels.append([test_database[cur_id + k]['label'][:, 1] for k in range(batch_size)])
             test_ids.append([test_database[cur_id + k]['pair_id'] for k in range(batch_size)])
             cur_id += batch_size
-        test_probs = np.concatenate(test_probs, axis=0)
+        sentence_logits = np.concatenate(sentence_logits, axis=0)
         test_ids = np.concatenate(test_ids, axis=0)
         sentence_labels = np.concatenate(sentence_labels, axis=0)
 
         # generate final result csv
-        columns = ["sentence_prob"]
-        dataframe = pd.DataFrame(data=test_probs, columns=columns)
+        dataframe = pd.DataFrame(data=sentence_logits, columns=["sentence_logits"])
         dataframe['pair_id'] = test_ids
-        dataframe['sentence_label'] = sentence_labels
-        dataframe = dataframe.set_index('pair_id', drop=True)
+        dataframe['sentence_labels'] = sentence_labels
 
+        # add Image-caption alignment predictions
+        if config.DATASET.ALIGN_CAPTION_IMG:
+            alignment_logits = np.concatenate(alignment_logits, axis=0)
+            alignment_labels = np.concatenate(alignment_labels, axis=0)
+            dataframe["alignment_logits"] = alignment_logits
+            dataframe["alignment_labels"] = alignment_labels
         # Save predictions
+        dataframe = dataframe.set_index('pair_id', drop=True)
         dataframe.to_csv(result_csv_path)
         print('result csv saved to {}.'.format(result_csv_path))
     else:
         print("Cache found in {}, skip test prediction!".format(result_csv_path))
         dataframe = pd.read_csv(result_csv_path)
+        sentence_logits = np.array(dataframe["sentence_logits"].values)
+        sentence_labels = np.array(dataframe["sentence_labels"].values)
+        if config.DATASET.ALIGN_CAPTION_IMG:
+            alignment_logits = np.array(dataframe["alignment_logits"].values)
+            alignment_labels = np.array(dataframe["alignment_logits"].values)
 
     # Evaluate predictions
-    pred_sent_probs = np.array(dataframe["sentence_prob"].values)
-    sentence_labels = np.array(dataframe["sentence_label"].values)
-    for metric in ["accuracy"]:
-        result = compute_metrics_sentence_level(metric, pred_sent_probs, sentence_labels)
-        print("{} on test set is: {}".format(metric, str(result)))
+    accuracy = compute_metrics_sentence_level("accuracy", sentence_logits, sentence_labels)
+    print("{} on test set is: {}".format("accuracy", str(accuracy)))
+    if config.DATASET.ALIGN_CAPTION_IMG:
+        # Use only alignement predictions when only one of the captions described the image
+        _filter = sentence_labels == 0
+        alignment_logits = alignment_logits[_filter]
+        alignment_labels = alignment_labels[_filter]
+        alignment_accuracy = compute_metrics_sentence_level("accuracy", alignment_logits, alignment_labels)
+        print("{} on test set is: {}".format("alignement accuracy", str(alignment_accuracy)))
