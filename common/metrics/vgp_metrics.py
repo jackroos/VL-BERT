@@ -36,13 +36,12 @@ class Accuracy(EvalMetric):
 
 class AlignmentAccuracy(EvalMetric):
     def __init__(self, allreduce=False, num_replicas=1):
-        super(AlignmentAccuracy, self).__init__('Acc', allreduce, num_replicas)
+        super(AlignmentAccuracy, self).__init__('AlgnmtAcc', allreduce, num_replicas)
 
     def update(self, outputs):
         with torch.no_grad():
             _filter = (outputs['sentence_label'] == 0)
             cls_logits = outputs['alignment_logits'][_filter]
-            sentence_label = outputs['sentence_label'][_filter]
             label = outputs['alignment_label'][_filter]
             if cls_logits.dim() == 2:
                 cls_logits = cls_logits.view(-1)

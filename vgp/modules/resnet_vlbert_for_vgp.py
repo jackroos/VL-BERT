@@ -288,7 +288,7 @@ class ResNetVLBERT(Module):
             alignment_loss = F.binary_cross_entropy_with_logits(alignment_logits[1 - sentence_label],
                                                                 first_correct[1 - sentence_label].type(torch.float32))
             outputs.update({'alignment_logits': alignment_logits,
-                            'first_correct': first_correct,
+                            'alignment_label': first_correct,
                             'alignment_loss': alignment_loss})
 
         # phrasal paraphrases classification (later)
