@@ -62,27 +62,26 @@ class ResNetVLBERT(Module):
         
         self.for_pretrain = False
         dim = config.NETWORK.VLBERT.hidden_size
+        if self.align_caption_img:
+            sentence_logits_shape = 3
+        else:
+            sentence_logits_shape = 1
         if config.NETWORK.SENTENCE.CLASSIFIER_TYPE == "2fc":
             self.sentence_cls = torch.nn.Sequential(
                 torch.nn.Dropout(config.NETWORK.SENTENCE.CLASSIFIER_DROPOUT, inplace=False),
                 torch.nn.Linear(dim, config.NETWORK.SENTENCE.CLASSIFIER_HIDDEN_SIZE),
                 torch.nn.ReLU(inplace=True),
                 torch.nn.Dropout(config.NETWORK.SENTENCE.CLASSIFIER_DROPOUT, inplace=False),
-                torch.nn.Linear(config.NETWORK.SENTENCE.CLASSIFIER_HIDDEN_SIZE, 1),
+                torch.nn.Linear(config.NETWORK.SENTENCE.CLASSIFIER_HIDDEN_SIZE,
+                                sentence_logits_shape),
             )
         elif config.NETWORK.SENTENCE.CLASSIFIER_TYPE == "1fc":
             self.sentence_cls = torch.nn.Sequential(
                 torch.nn.Dropout(config.NETWORK.SENTENCE.CLASSIFIER_DROPOUT, inplace=False),
-                torch.nn.Linear(dim, 1)
+                torch.nn.Linear(dim, sentence_logits_shape)
             )
         else:
             raise ValueError("Classifier type: {} not supported!".format(config.NETWORK.SENTENCE.CLASSIFIER_TYPE))
-
-        if self.align_caption_img:
-            self.caption_img_aligner = torch.nn.Sequential(
-                torch.nn.Dropout(config.NETWORK.SENTENCE.CLASSIFIER_DROPOUT, inplace=False),
-                torch.nn.Linear(dim, 1)
-            )
 
         if self.use_phrasal_paraphrases:
             if config.NETWORK.PHRASE.CLASSIFIER_TYPE == "2fc":
@@ -141,7 +140,7 @@ class ResNetVLBERT(Module):
         row_id = span_tags_fixed.new_zeros(span_tags_fixed.shape)
         row_id_broadcaster = torch.arange(0, row_id.shape[0], step=1, device=row_id.device)[:, None]
 
-        # Add extra diminsions to the row broadcaster so it matches row_id
+        # Add extra dimensions to the row broadcaster so it matches row_id
         leading_dims = len(span_tags.shape) - 2
         for i in range(leading_dims):
             row_id_broadcaster = row_id_broadcaster[..., None]
@@ -228,8 +227,7 @@ class ResNetVLBERT(Module):
         else:
             phrase1_mask, phrase2_mask = None, None
 
-        sentence_label = label[:, 0].view(-1)
-        first_correct = label[:, 1].view(-1)
+        sentence_label = label.view(-1)
 
 
         ############################################
@@ -274,25 +272,17 @@ class ResNetVLBERT(Module):
         outputs = {}
         
         # sentence classification
-        sentence_logits = self.sentence_cls(pooled_rep).view(-1)
-        sentence_cls_loss = F.binary_cross_entropy_with_logits(sentence_logits, sentence_label.type(torch.float32))
+        sentence_logits = self.sentence_cls(pooled_rep)
+        if self.align_caption_img:
+            sentence_logits = sentence_logits.view((-1, 3))
+            sentence_cls_loss = F.cross_entropy(sentence_logits, sentence_label)
+        else:
+            sentence_logits = sentence_logits.view(-1)
+            sentence_cls_loss = F.binary_cross_entropy_with_logits(sentence_logits, sentence_label.type(torch.float32))
 
         outputs.update({'sentence_label_logits': sentence_logits,
                         'sentence_label': sentence_label.long(),
                         'sentence_cls_loss': sentence_cls_loss})
-
-        # Align the correct caption with the image when only one caption describes the input image
-        alignment_loss = torch.tensor([0], dtype=torch.float32)
-        if self.align_caption_img:
-            alignment_logits = self.caption_img_aligner(pooled_rep).view(-1)
-            if sentence_label.sum() == sentence_label.shape[0]:  # Loss is 0 when all samples are positive
-                alignment_loss = torch.tensor([0], dtype=torch.float32)
-            else:
-                alignment_loss = F.binary_cross_entropy_with_logits(alignment_logits[sentence_label == 0],
-                                                                    first_correct[sentence_label == 0].type(torch.float32))
-            outputs.update({'alignment_logits': alignment_logits,
-                            'alignment_label': first_correct,
-                            'alignment_loss': alignment_loss})
 
         # phrasal paraphrases classification (later)
         phrase_cls_loss = torch.tensor([0], dtype=torch.float32)
@@ -302,8 +292,7 @@ class ResNetVLBERT(Module):
         # final_rep = torch.cat((h_rep_ph1, h_rep_ph2, torch.abs(h_rep_ph2 - h_rep_ph1), torch.mul(h_rep_ph1, h_rep_ph2)),
         #                       axis=1)
 
-        loss = sentence_cls_loss.mean() + self.config.NETWORK.PHRASE_LOSS_WEIGHT * phrase_cls_loss.mean() + \
-            self.config.NETWORK.ALIGNMENT_LOSS_WEIGHT * alignment_loss.mean()
+        loss = sentence_cls_loss.mean() + self.config.NETWORK.PHRASE_LOSS_WEIGHT * phrase_cls_loss.mean()
 
         return outputs, loss
 
@@ -392,13 +381,12 @@ class ResNetVLBERT(Module):
         ###########################################
         outputs = {}
         # sentence classification
-        sentence_logits = self.sentence_cls(pooled_rep).view(-1)
-        outputs.update({'sentence_label_logits': sentence_logits})
-
-        # Align the correct caption with the image when only one caption describes the input image
+        sentence_logits = self.sentence_cls(pooled_rep)
         if self.align_caption_img:
-            alignment_logits = self.caption_img_aligner(pooled_rep).view(-1)
-            outputs.update({'alignment_logits': alignment_logits})
+            sentence_logits = sentence_logits.view((-1, 3))
+        else:
+            sentence_logits = sentence_logits.view(-1)
+        outputs.update({'sentence_label_logits': sentence_logits})
 
         return outputs
 
