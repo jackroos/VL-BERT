@@ -35,10 +35,8 @@ class Accuracy(EvalMetric):
                 self.num_inst += cls_logits.shape[0]
 
 
-def compute_metrics_sentence_level(metric, pred_probs, labels):
+def compute_metrics_sentence_level(metric, pred_labels, labels):
     if metric == "accuracy":
-        pred_labels = np.zeros_like(labels)
-        pred_labels[pred_probs >= 0.] = 1
         result = (pred_labels == labels).mean()
     else:
         print("The metric {} has not been implemented".format(metric))

@@ -82,8 +82,6 @@ def test_net(args, config, ckpt_path=None, save_path=None, save_name=None):
 
         # test
         sentence_logits = []
-        alignment_logits = []
-        alignment_labels = []
         test_ids = []
         sentence_labels = []
         cur_id = 0
@@ -91,29 +89,24 @@ def test_net(args, config, ckpt_path=None, save_path=None, save_name=None):
         for batch in test_loader:
             batch = to_cuda(batch)
             output = model(*batch)
-            sentence_logits.append(torch.sigmoid(output['sentence_label_logits'].float()).detach().cpu().numpy())
+            sentence_logits.append(output['sentence_label_logits'].float().detach().cpu().numpy())
             batch_size = batch[0].shape[0]
             sentence_labels.append([test_database[cur_id + k]['label'][:, 0] for k in range(batch_size)])
-            if config.DATASET.ALIGN_CAPTION_IMG:
-                alignment_logits.append(torch.sigmoid(output['alignment_logits'].float()).detach().cpu().numpy())
-                alignment_labels.append([test_database[cur_id + k]['label'][:, 1] for k in range(batch_size)])
             test_ids.append([test_database[cur_id + k]['pair_id'] for k in range(batch_size)])
             cur_id += batch_size
         sentence_logits = np.concatenate(sentence_logits, axis=0)
         test_ids = np.concatenate(test_ids, axis=0)
         sentence_labels = np.concatenate(sentence_labels, axis=0)
+        if config.DATASET.ALIGN_CAPTION_IMG:
+            sentence_prediction = np.argmax(sentence_logits, axis=1).reshape(-1)
+        else:
+            sentence_prediction = (sentence_logits > 0.).astype(int).reshape(-1)
 
         # generate final result csv
-        dataframe = pd.DataFrame(data=sentence_logits, columns=["sentence_logits"])
+        dataframe = pd.DataFrame(data=sentence_prediction, columns=["sentence_pred_label"])
         dataframe['pair_id'] = test_ids
         dataframe['sentence_labels'] = sentence_labels
 
-        # add Image-caption alignment predictions
-        if config.DATASET.ALIGN_CAPTION_IMG:
-            alignment_logits = np.concatenate(alignment_logits, axis=0)
-            alignment_labels = np.concatenate(alignment_labels, axis=0)
-            dataframe["alignment_logits"] = alignment_logits
-            dataframe["alignment_labels"] = alignment_labels
         # Save predictions
         dataframe = dataframe.set_index('pair_id', drop=True)
         dataframe.to_csv(result_csv_path)
@@ -121,19 +114,9 @@ def test_net(args, config, ckpt_path=None, save_path=None, save_name=None):
     else:
         print("Cache found in {}, skip test prediction!".format(result_csv_path))
         dataframe = pd.read_csv(result_csv_path)
-        sentence_logits = np.array(dataframe["sentence_logits"].values)
+        sentence_prediction = np.array(dataframe["sentence_pred_label"].values)
         sentence_labels = np.array(dataframe["sentence_labels"].values)
-        if config.DATASET.ALIGN_CAPTION_IMG:
-            alignment_logits = np.array(dataframe["alignment_logits"].values)
-            alignment_labels = np.array(dataframe["alignment_logits"].values)
 
     # Evaluate predictions
-    accuracy = compute_metrics_sentence_level("accuracy", sentence_logits, sentence_labels)
+    accuracy = compute_metrics_sentence_level("accuracy", sentence_prediction, sentence_labels)
     print("{} on test set is: {}".format("accuracy", str(accuracy)))
-    if config.DATASET.ALIGN_CAPTION_IMG:
-        # Use only alignement predictions when only one of the captions described the image
-        _filter = sentence_labels == 0
-        alignment_logits = alignment_logits[_filter]
-        alignment_labels = alignment_labels[_filter]
-        alignment_accuracy = compute_metrics_sentence_level("accuracy", alignment_logits, alignment_labels)
-        print("{} on test set is: {}".format("alignement accuracy", str(alignment_accuracy)))
