@@ -41,13 +41,14 @@ class AlignmentAccuracy(EvalMetric):
     def update(self, outputs):
         with torch.no_grad():
             _filter = (outputs['sentence_label'] == 0)
-            cls_logits = outputs['alignment_logits'][_filter]
-            label = outputs['alignment_label'][_filter]
-            if cls_logits.dim() == 2:
-                cls_logits = cls_logits.view(-1)
-                label = label.view(-1)
-            self.sum_metric += float(((cls_logits > 0.5).float() == label.float()).sum().item())
-            self.num_inst += cls_logits.shape[0]
+            if _filter.sum() != 0:
+                cls_logits = outputs['alignment_logits'][_filter]
+                label = outputs['alignment_label'][_filter]
+                if cls_logits.dim() == 2:
+                    cls_logits = cls_logits.view(-1)
+                    label = label.view(-1)
+                self.sum_metric += float(((cls_logits > 0.5).float() == label.float()).sum().item())
+                self.num_inst += cls_logits.shape[0]
 
 
 def compute_metrics_sentence_level(metric, pred_probs, labels):

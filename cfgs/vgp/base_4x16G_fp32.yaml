@@ -1,6 +1,6 @@
 ---
 RNG_SEED: 12345
-OUTPUT_PATH: './output/vl-bert/vgp/version2_hard_aligncaptimg/'
+OUTPUT_PATH: './output/vl-bert/vgp/version2_NG_e2e_aligncaptimg/'
 MODULE: ResNetVLBERT
 GPUS: '0,1,2,3,4,5'
 LOG_FREQUENT: 100
@@ -70,6 +70,7 @@ NETWORK:
   ENABLE_CNN_REG_LOSS: false
   PHRASE_LOSS_WEIGHT: 1.0
   CNN_LOSS_TOP: false
+  NO_GROUNDING: true
 
   VLBERT:
     input_transform_type: 1
