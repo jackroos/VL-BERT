@@ -61,8 +61,8 @@ def train_net(args, config):
     if args.dist:
         model = eval(config.MODULE)(config)
         local_rank = int(os.environ.get('LOCAL_RANK') or 0)
-        gpus = config.GPUS.split(',')
-        torch.cuda.set_device(int(gpus[local_rank]))
+        config.GPUS = str(local_rank)
+        torch.cuda.set_device(local_rank)
         master_address = os.environ['MASTER_ADDR']
         master_port = int(os.environ['MASTER_PORT'] or 23456)
         world_size = int(os.environ['WORLD_SIZE'] or 1)
@@ -77,10 +77,11 @@ def train_net(args, config):
                 rank=rank,
                 group_name='mtorch')
         print(f'native distributed, size: {world_size}, rank: {rank}, local rank: {local_rank}')
-        torch.cuda.set_device(int(gpus[local_rank]))
+        torch.cuda.set_device(local_rank)
+        config.GPUS = str(local_rank)
         model = model.cuda()
         if not config.TRAIN.FP16:
-            model = DDP(model, device_ids=[int(gpus[local_rank])], output_device=int(gpus[local_rank]))
+            model = DDP(model, device_ids=[local_rank], output_device=local_rank)
 
         if rank == 0:
             summary_parameters(model.module if isinstance(model, torch.nn.parallel.DistributedDataParallel) else model,
