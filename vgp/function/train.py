@@ -236,11 +236,6 @@ def train_net(args, config):
                                                num_replicas=world_size if args.dist else 1)]
     val_metrics_list = [vgp_metrics.Accuracy(allreduce=args.dist,
                                              num_replicas=world_size if args.dist else 1)]
-    if config.DATASET.ALIGN_CAPTION_IMG:
-        train_metrics_list.append(vgp_metrics.AlignmentAccuracy(allreduce=args.dist,
-                                                                num_replicas=world_size if args.dist else 1))
-        val_metrics_list.append(vgp_metrics.AlignmentAccuracy(allreduce=args.dist,
-                                                              num_replicas=world_size if args.dist else 1))
 
     for output_name, display_name in config.TRAIN.LOSS_LOGGERS:
         train_metrics_list.append(
