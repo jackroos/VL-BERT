@@ -400,6 +400,7 @@ def test_module():
     module = ResNetVLBERT(config)
     for batch in dataloader:
         outputs, loss = module(*batch)
+        print("batch done")
 
 
 if __name__ == '__main__':
