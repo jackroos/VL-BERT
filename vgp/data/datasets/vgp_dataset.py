@@ -132,8 +132,7 @@ class VGPDataset(Dataset):
                             'img_id': img_id,
                             'caption1': list_captions[i],
                             'caption2': list_captions[j],
-                            'label': 1,
-                            'first_correct': True
+                            'label': 0
                         }
                         database.append(db_i)
 
@@ -169,8 +168,7 @@ class VGPDataset(Dataset):
                             db_i = {
                                 'pair_id': pair_id,
                                 'img_id': img_id,
-                                'label': 0,
-                                'first_correct': not flip
+                                'label': 1 + flip
                             }
                             if flip:
                                 db_i['caption1'] = wrong_caption
@@ -251,7 +249,7 @@ class VGPDataset(Dataset):
         # Add (later) mask to locate sub-phrases inside full sentence
 
         # Load label
-        label = torch.as_tensor([int(idb['label']), int(idb['first_correct'])]) if not self.test_mode else None
+        label = torch.as_tensor(int(idb['label'])) if not self.test_mode else None
 
         if not self.test_mode:
             outputs = (image, boxes, final_input_1, final_input_2, im_info, label)
