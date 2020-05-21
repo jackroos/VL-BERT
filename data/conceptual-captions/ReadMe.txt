@@ -54,7 +54,7 @@
    # and your Makefile.config in place, then simply do:
    make -j8 && make pycaffe
    
-   3) Download pretrained model (https://www.dropbox.com/s/wqada4qiv1dz9dk/resnet101_faster_rcnn_final.caffemodel?dl=1), and put it under data/faster_rcnn_models.
+   3) Download pretrained model (https://www.dropbox.com/s/5xethd2nxa8qrnq/resnet101_faster_rcnn_final.caffemodel?dl=1), and put it under data/faster_rcnn_models.
    
 9. python ./tools/generate_tsv_v2.py --gpu 0,1,2,3,4,5,6,7 --cfg experiments/cfgs/faster_rcnn_end2end_resnet.yml --def models/vg/ResNet-101/faster_rcnn_end2end_final/test.prototxt --net data/faster_rcnn_models/resnet101_faster_rcnn_final.caffemodel --split conceptual_captions_train --data_root {Conceptual_Captions_Root} --out {Conceptual_Captions_Root}/train_frcnn/
 
