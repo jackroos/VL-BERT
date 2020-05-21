@@ -216,14 +216,18 @@ class ConceptualCaptionsDataset(Dataset):
         if len(text) + len(boxes) > self.seq_len:
             text_len_keep = len(text)
             box_len_keep = len(boxes)
-            while (text_len_keep + box_len_keep) > self.seq_len:
+            while (text_len_keep + box_len_keep) > self.seq_len and (text_len_keep > 0) and (box_len_keep > 0):
                 if box_len_keep > text_len_keep:
                     box_len_keep -= 1
                 else:
                     text_len_keep -= 1
+            if text_len_keep < 2:
+                text_len_keep = 2
+            if box_len_keep < 1:
+                box_len_keep = 1
             boxes = boxes[:box_len_keep]
-            text = text[:text_len_keep]
-            mlm_labels = mlm_labels[:text_len_keep]
+            text = text[:(text_len_keep - 1)] + [text[-1]]
+            mlm_labels = mlm_labels[:(text_len_keep - 1)] + [mlm_labels[-1]]
             mvrc_ops = mvrc_ops[:box_len_keep]
             mvrc_labels = mvrc_labels[:box_len_keep]
 
