@@ -102,15 +102,6 @@ class VQA(Dataset):
                 "test-dev2015": ("vgbua_res101_precomputed", "test2015_resnet101_faster_rcnn_genome"),
                 "test2015": ("vgbua_res101_precomputed", "test2015_resnet101_faster_rcnn_genome"),
             }
-        elif boxes == "10-100ada_v5.1.1_base":
-            precomputed_boxes = {
-                'train2014': ("vlb-res101_vqa_precomputed", "vqa-v5.1.1-base-10ep-precomp-trainval"),
-                "valminusminival2014": ("vlb-res101_vqa_precomputed", "vqa-v5.1.1-base-10ep-precomp-trainval"),
-                'val2014': ("vlb-res101_vqa_precomputed", "vqa-v5.1.1-base-10ep-precomp-trainval"),
-                "minival2014": ("vlb-res101_vqa_precomputed", "vqa-v5.1.1-base-10ep-precomp-trainval"),
-                "test-dev2015": ("vlb-res101_vqa_precomputed", "vqa-v5.1.1-base-10ep-precomp-test"),
-                "test2015": ("vlb-res101_vqa_precomputed", "vqa-v5.1.1-base-10ep-precomp-test"),
-            }
         else:
             raise ValueError("Not support boxes: {}!".format(boxes))
         coco_dataset = {
