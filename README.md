@@ -40,11 +40,13 @@ Thanks to PyTorch and its 3rd-party libraries, this codebase also contains follo
 
 ## Citing VL-BERT
 ```bibtex
-@article{su2019vl,
-  title={Vl-bert: Pre-training of generic visual-linguistic representations},
-  author={Su, Weijie and Zhu, Xizhou and Cao, Yue and Li, Bin and Lu, Lewei and Wei, Furu and Dai, Jifeng},
-  journal={arXiv preprint arXiv:1908.08530},
-  year={2019}
+@inproceedings{
+  Su2020VL-BERT:,
+  title={VL-BERT: Pre-training of Generic Visual-Linguistic Representations},
+  author={Weijie Su and Xizhou Zhu and Yue Cao and Bin Li and Lewei Lu and Furu Wei and Jifeng Dai},
+  booktitle={International Conference on Learning Representations},
+  year={2020},
+  url={https://openreview.net/forum?id=SygXPaEYvH}
 }
 ```
 
