@@ -43,7 +43,7 @@ def test_net(args, config, ckpt_path=None, save_path=None, save_name=None):
     result_csv_path = os.path.join(save_path,
                                    '{}_test_result_{}.csv'.format(save_name, config.DATASET.TASK))
     if args.use_cache and os.path.isfile(result_csv_path):
-        print("Cache found in {}, skip test!".format(result_csv_path))
+        print(("Cache found in {}, skip test!".format(result_csv_path)))
         return result_csv_path
 
     print('test net...')
@@ -57,7 +57,7 @@ def test_net(args, config, ckpt_path=None, save_path=None, save_name=None):
                                              split='train')
         model_prefix = os.path.join(train_output_path, config.MODEL_PREFIX)
         ckpt_path = '{}-best.model'.format(model_prefix)
-        print('Use best checkpoint {}...'.format(ckpt_path))
+        print(('Use best checkpoint {}...'.format(ckpt_path)))
 
     shutil.copy2(ckpt_path, os.path.join(save_path, '{}_test_ckpt_{}.model'.format(config.MODEL_PREFIX, config.DATASET.TASK)))
 
@@ -120,7 +120,7 @@ def test_net(args, config, ckpt_path=None, save_path=None, save_name=None):
 
     result_npy_path = os.path.join(save_path, '{}_test_result_{}.npy'.format(save_name, config.DATASET.TASK))
     np.save(result_npy_path, test_probs)
-    print('result npy saved to {}.'.format(result_npy_path))
+    print(('result npy saved to {}.'.format(result_npy_path)))
 
     # generate final result csv
     if config.DATASET.TASK == 'Q2A':
@@ -132,7 +132,7 @@ def test_net(args, config, ckpt_path=None, save_path=None, save_name=None):
     dataframe = dataframe.set_index('annot_id', drop=True)
 
     dataframe.to_csv(result_csv_path)
-    print('result csv saved to {}.'.format(result_csv_path))
+    print(('result csv saved to {}.'.format(result_csv_path)))
     return result_csv_path
 
 
@@ -144,7 +144,7 @@ def merge_result(q2a_result_file, qa2r_result_file, output_file):
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
     merged_df.to_csv(output_file, index=False)
-    print('merged result csv saved to {}.'.format(output_file))
+    print(('merged result csv saved to {}.'.format(output_file)))
 
 
 

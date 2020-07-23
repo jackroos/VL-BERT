@@ -99,7 +99,7 @@ class OpenAIGPTTokenizer(object):
                 "We assumed '{}' was a path or url but couldn't find files {} and {} "
                 "at this path or url.".format(
                     pretrained_model_name_or_path,
-                    ', '.join(PRETRAINED_VOCAB_ARCHIVE_MAP.keys()),
+                    ', '.join(list(PRETRAINED_VOCAB_ARCHIVE_MAP.keys())),
                     pretrained_model_name_or_path,
                     vocab_file, merges_file))
             return None
@@ -134,10 +134,10 @@ class OpenAIGPTTokenizer(object):
 
         self.max_len = max_len if max_len is not None else int(1e12)
         self.encoder = json.load(open(vocab_file, encoding="utf-8"))
-        self.decoder = {v:k for k,v in self.encoder.items()}
+        self.decoder = {v:k for k,v in list(self.encoder.items())}
         merges = open(merges_file, encoding='utf-8').read().split('\n')[1:-1]
         merges = [tuple(merge.split()) for merge in merges]
-        self.bpe_ranks = dict(zip(merges, range(len(merges))))
+        self.bpe_ranks = dict(list(zip(merges, list(range(len(merges))))))
         self.cache = {}
         self.set_special_tokens(special_tokens)
 
@@ -154,7 +154,7 @@ class OpenAIGPTTokenizer(object):
             self.special_tokens_decoder = {}
             return
         self.special_tokens = dict((tok, len(self.encoder) + i) for i, tok in enumerate(special_tokens))
-        self.special_tokens_decoder = {v:k for k, v in self.special_tokens.items()}
+        self.special_tokens_decoder = {v:k for k, v in list(self.special_tokens.items())}
         if self.fix_text is None:
             # Using BERT's BasicTokenizer: we can update the tokenizer
             self.nlp.never_split = special_tokens
@@ -221,7 +221,7 @@ class OpenAIGPTTokenizer(object):
     def convert_tokens_to_ids(self, tokens):
         """ Converts a sequence of tokens into ids using the vocab. """
         ids = []
-        if isinstance(tokens, str) or (sys.version_info[0] == 2 and isinstance(tokens, unicode)):
+        if isinstance(tokens, str) or (sys.version_info[0] == 2 and isinstance(tokens, str)):
             if tokens in self.special_tokens:
                 return self.special_tokens[tokens]
             else:

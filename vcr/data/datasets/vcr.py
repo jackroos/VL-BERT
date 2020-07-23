@@ -89,7 +89,7 @@ class VCRDataset(Dataset):
         self.ignore_db_cache = ignore_db_cache
         self.aspect_grouping = aspect_grouping
         self.basic_align = basic_align
-        print('Dataset Basic Align: {}'.format(self.basic_align))
+        print(('Dataset Basic Align: {}'.format(self.basic_align)))
         self.cache_dir = os.path.join(root_path, 'cache')
         self.only_use_relevant_dets = only_use_relevant_dets
         self.add_image_as_a_box = add_image_as_a_box
@@ -131,18 +131,18 @@ class VCRDataset(Dataset):
         if os.path.exists(db_cache_path):
             if not self.ignore_db_cache:
                 # reading cached database
-                print('cached database found in {}.'.format(db_cache_path))
+                print(('cached database found in {}.'.format(db_cache_path)))
                 with open(db_cache_path, 'rb') as f:
-                    print('loading cached database from {}...'.format(db_cache_path))
+                    print(('loading cached database from {}...'.format(db_cache_path)))
                     tic = time.time()
                     database = cPickle.load(f)
-                    print('Done (t={:.2f}s)'.format(time.time() - tic))
+                    print(('Done (t={:.2f}s)'.format(time.time() - tic)))
                     return database
             else:
                 print('cached database ignored.')
 
         # ignore or not find cached database, reload it from annotation file
-        print('loading database from {}...'.format(ann_file))
+        print(('loading database from {}...'.format(ann_file)))
         tic = time.time()
 
         with jsonlines.open(ann_file) as reader:
@@ -166,17 +166,17 @@ class VCRDataset(Dataset):
                     'rationale_label': ann['rationale_label'] if not self.test_mode else None,
                 }
                 database.append(db_i)
-        print('Done (t={:.2f}s)'.format(time.time() - tic))
+        print(('Done (t={:.2f}s)'.format(time.time() - tic)))
 
         # cache database via cPickle
         if self.cache_db:
-            print('caching database to {}...'.format(db_cache_path))
+            print(('caching database to {}...'.format(db_cache_path)))
             tic = time.time()
             if not os.path.exists(db_cache_root):
                 makedirsExist(db_cache_root)
             with open(db_cache_path, 'wb') as f:
                 cPickle.dump(database, f)
-            print('Done (t={:.2f}s)'.format(time.time() - tic))
+            print(('Done (t={:.2f}s)'.format(time.time() - tic)))
 
         return database
 
@@ -196,7 +196,7 @@ class VCRDataset(Dataset):
         group_ids[horz] = 0
         group_ids[vert] = 1
 
-        print('Done (t={:.2f}s)'.format(time.time() - t))
+        print(('Done (t={:.2f}s)'.format(time.time() - t)))
 
         return group_ids
 
@@ -364,7 +364,7 @@ class VCRDataset(Dataset):
 
         question, question_raw = idb['question']
         question_align_matrix = get_align_matrix([w[2] for w in question])
-        answer_choices, answer_choices_raw = zip(*idb['answer_choices'])
+        answer_choices, answer_choices_raw = list(zip(*idb['answer_choices']))
         answer_choices = list(answer_choices)
         answer_align_matrix = [get_align_matrix([w[2] for w in a]) for a in answer_choices]
         answer_label = torch.as_tensor(idb['answer_label']) if not self.test_mode else None

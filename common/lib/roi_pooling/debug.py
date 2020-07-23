@@ -1,6 +1,6 @@
 import torch
-from roi_pool import ROIPool
-from roi_align import ROIAlign
+from .roi_pool import ROIPool
+from .roi_align import ROIAlign
 
 align = ROIAlign(output_size=(3, 3), spatial_scale=1.0, sampling_ratio=1)
 pool = ROIPool(output_size=(3, 3), spatial_scale=1.0)

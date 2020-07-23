@@ -78,13 +78,13 @@ class RobertaTokenizer(PreTrainedTokenizer):
                                                mask_token=mask_token, **kwargs)
 
         self.encoder = json.load(open(vocab_file, encoding="utf-8"))
-        self.decoder = {v: k for k, v in self.encoder.items()}
+        self.decoder = {v: k for k, v in list(self.encoder.items())}
         self.errors = errors  # how to handle errors in decoding
         self.byte_encoder = bytes_to_unicode()
-        self.byte_decoder = {v: k for k, v in self.byte_encoder.items()}
+        self.byte_decoder = {v: k for k, v in list(self.byte_encoder.items())}
         bpe_data = open(merges_file, encoding='utf-8').read().split('\n')[1:-1]
         bpe_merges = [tuple(merge.split()) for merge in bpe_data]
-        self.bpe_ranks = dict(zip(bpe_merges, range(len(bpe_merges))))
+        self.bpe_ranks = dict(list(zip(bpe_merges, list(range(len(bpe_merges))))))
         self.cache = {}
 
         # Should haved added re.IGNORECASE so BPE merges can happen for capitalized versions of contractions
@@ -189,13 +189,13 @@ class RobertaTokenizer(PreTrainedTokenizer):
 
         index = 0
         with open(merge_file, "w", encoding="utf-8") as writer:
-            writer.write(u'#version: 0.2\n')
-            for bpe_tokens, token_index in sorted(self.bpe_ranks.items(), key=lambda kv: kv[1]):
+            writer.write('#version: 0.2\n')
+            for bpe_tokens, token_index in sorted(list(self.bpe_ranks.items()), key=lambda kv: kv[1]):
                 if index != token_index:
                     logger.warning("Saving vocabulary to {}: BPE merge indices are not consecutive."
                                    " Please check that the tokenizer is not corrupted!".format(merge_file))
                     index = token_index
-                writer.write(' '.join(bpe_tokens) + u'\n')
+                writer.write(' '.join(bpe_tokens) + '\n')
                 index += 1
 
         return vocab_file, merge_file

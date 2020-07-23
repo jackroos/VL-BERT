@@ -228,7 +228,7 @@ def train_net(args, config):
         prefix_change = [prefix_change.split('->') for prefix_change in config.NETWORK.PARTIAL_PRETRAIN_PREFIX_CHANGES]
         if len(prefix_change) > 0:
             pretrain_state_dict_parsed = {}
-            for k, v in pretrain_state_dict.items():
+            for k, v in list(pretrain_state_dict.items()):
                 no_match = True
                 for pretrain_prefix, new_prefix in prefix_change:
                     if k.startswith(pretrain_prefix):
@@ -330,7 +330,7 @@ def train_net(args, config):
 
     # broadcast parameter and optimizer state from rank 0 before training start
     if args.dist:
-        for v in model.state_dict().values():
+        for v in list(model.state_dict().values()):
             distributed.broadcast(v, src=0)
         # for v in optimizer.state_dict().values():
         #     distributed.broadcast(v, src=0)

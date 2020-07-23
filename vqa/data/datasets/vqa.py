@@ -128,7 +128,7 @@ class VQA(Dataset):
         self.root_path = root_path
         with open(answer_vocab_file, 'r', encoding='utf8') as f:
             self.answer_vocab = [w.lower().strip().strip('\r').strip('\n').strip('\r') for w in f.readlines()]
-            self.answer_vocab = list(filter(lambda x: x != '', self.answer_vocab))
+            self.answer_vocab = list([x for x in self.answer_vocab if x != ''])
             if not self.use_imdb:
                 self.answer_vocab = [self.processPunctuation(w) for w in self.answer_vocab]
         self.image_sets = [iset.strip() for iset in image_set.split('+')]
@@ -340,24 +340,24 @@ class VQA(Dataset):
         if os.path.exists(db_cache_path):
             if not self.ignore_db_cache:
                 # reading cached database
-                print('cached database found in {}.'.format(db_cache_path))
+                print(('cached database found in {}.'.format(db_cache_path)))
                 with open(db_cache_path, 'rb') as f:
-                    print('loading cached database from {}...'.format(db_cache_path))
+                    print(('loading cached database from {}...'.format(db_cache_path)))
                     tic = time.time()
                     database = cPickle.load(f)
-                    print('Done (t={:.2f}s)'.format(time.time() - tic))
+                    print(('Done (t={:.2f}s)'.format(time.time() - tic)))
                     return database
             else:
                 print('cached database ignored.')
 
         # ignore or not find cached database, reload it from annotation file
-        print('loading database of split {}...'.format('+'.join(self.image_sets)))
+        print(('loading database of split {}...'.format('+'.join(self.image_sets))))
         tic = time.time()
 
         if self.use_imdb:
             for imdb_file, (coco_path, coco_annot), box_file \
                     in zip(self.imdb_files, self.coco_datasets, self.precomputed_box_files):
-                print("loading imdb: {}".format(imdb_file))
+                print(("loading imdb: {}".format(imdb_file)))
                 imdb = np.load(imdb_file, allow_pickle=True)
                 print("imdb info:")
                 pprint.pprint(imdb[0])
@@ -395,17 +395,17 @@ class VQA(Dataset):
                            }
                     database.append(idb)
 
-        print('Done (t={:.2f}s)'.format(time.time() - tic))
+        print(('Done (t={:.2f}s)'.format(time.time() - tic)))
 
         # cache database via cPickle
         if self.cache_db:
-            print('caching database to {}...'.format(db_cache_path))
+            print(('caching database to {}...'.format(db_cache_path)))
             tic = time.time()
             if not os.path.exists(db_cache_root):
                 makedirsExist(db_cache_root)
             with open(db_cache_path, 'wb') as f:
                 cPickle.dump(database, f)
-            print('Done (t={:.2f}s)'.format(time.time() - tic))
+            print(('Done (t={:.2f}s)'.format(time.time() - tic)))
 
         return database
 
@@ -425,7 +425,7 @@ class VQA(Dataset):
         group_ids[horz] = 0
         group_ids[vert] = 1
 
-        print('Done (t={:.2f}s)'.format(time.time() - t))
+        print(('Done (t={:.2f}s)'.format(time.time() - t)))
 
         return group_ids
 

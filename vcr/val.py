@@ -85,10 +85,10 @@ def main():
         os.makedirs(args.result_path)
     if args.use_cache:
         if os.path.exists(a_cache_fn):
-            print("Load cached predictions from {}...".format(a_cache_fn))
+            print(("Load cached predictions from {}...".format(a_cache_fn)))
             a_pred = np.load(a_cache_fn)
         if os.path.exists(r_cache_fn):
-            print("Load cached predictions from {}...".format(r_cache_fn))
+            print(("Load cached predictions from {}...".format(r_cache_fn)))
             r_pred = np.load(r_cache_fn)
     else:
         if a_config is not None and args.a_ckpt is not None:
@@ -201,13 +201,13 @@ def main():
     print("Evaluate...")
     if a_pred is not None:
         acc_a = (a_pred.argmax(1) == a_gt).sum() * 1.0 / a_gt.size
-        print("Q->A\t{:.1f}".format(acc_a * 100.0))
+        print(("Q->A\t{:.1f}".format(acc_a * 100.0)))
     if r_pred is not None:
         acc_r = (r_pred.argmax(1) == r_gt).sum() * 1.0 / r_gt.size
-        print("QA->R\t{:.1f}".format(acc_r * 100.0))
+        print(("QA->R\t{:.1f}".format(acc_r * 100.0)))
     if a_pred is not None and r_pred is not None:
         acc_joint = ((a_pred.argmax(1) == a_gt) * (r_pred.argmax(1) == r_gt)).sum() * 1.0 / a_gt.size
-        print("Q->AR\t{:.1f}".format(acc_joint * 100.0))
+        print(("Q->AR\t{:.1f}".format(acc_joint * 100.0)))
 
 
 if __name__ == '__main__':

@@ -247,18 +247,18 @@ class RefCOCO(Dataset):
         if os.path.exists(db_cache_path):
             if not self.ignore_db_cache:
                 # reading cached database
-                print('cached database found in {}.'.format(db_cache_path))
+                print(('cached database found in {}.'.format(db_cache_path)))
                 with open(db_cache_path, 'rb') as f:
-                    print('loading cached database from {}...'.format(db_cache_path))
+                    print(('loading cached database from {}...'.format(db_cache_path)))
                     tic = time.time()
                     database = cPickle.load(f)
-                    print('Done (t={:.2f}s)'.format(time.time() - tic))
+                    print(('Done (t={:.2f}s)'.format(time.time() - tic)))
                     return database
             else:
                 print('cached database ignored.')
 
         # ignore or not find cached database, reload it from annotation file
-        print('loading database of split {}...'.format('+'.join(self.image_sets)))
+        print(('loading database of split {}...'.format('+'.join(self.image_sets))))
         tic = time.time()
 
         for ref_id, ref in zip(self.refer_ids, self.refs):
@@ -287,17 +287,17 @@ class RefCOCO(Dataset):
                 }
                 database.append(idb)
 
-        print('Done (t={:.2f}s)'.format(time.time() - tic))
+        print(('Done (t={:.2f}s)'.format(time.time() - tic)))
 
         # cache database via cPickle
         if self.cache_db:
-            print('caching database to {}...'.format(db_cache_path))
+            print(('caching database to {}...'.format(db_cache_path)))
             tic = time.time()
             if not os.path.exists(db_cache_root):
                 makedirsExist(db_cache_root)
             with open(db_cache_path, 'wb') as f:
                 cPickle.dump(database, f)
-            print('Done (t={:.2f}s)'.format(time.time() - tic))
+            print(('Done (t={:.2f}s)'.format(time.time() - tic)))
 
         return database
 
@@ -317,7 +317,7 @@ class RefCOCO(Dataset):
         group_ids[horz] = 0
         group_ids[vert] = 1
 
-        print('Done (t={:.2f}s)'.format(time.time() - t))
+        print(('Done (t={:.2f}s)'.format(time.time() - t)))
 
         return group_ids
 

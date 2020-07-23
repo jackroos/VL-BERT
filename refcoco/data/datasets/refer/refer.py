@@ -47,7 +47,7 @@ class REFER:
         # provide data_root folder which contains refclef, refcoco, refcoco+ and refcocog
         # also provide dataset name and splitBy information
         # e.g., dataset = 'refcoco', splitBy = 'unc'
-        print('loading dataset %s into memory...' % dataset)
+        print(('loading dataset %s into memory...' % dataset))
         self.ROOT_DIR = osp.abspath(osp.dirname(__file__))
         self.DATA_DIR = osp.join(data_root, dataset)
         if dataset in ['refcoco', 'refcoco+', 'refcocog']:
@@ -55,7 +55,7 @@ class REFER:
         elif dataset == 'refclef':
             self.IMAGE_DIR = osp.join(data_root, 'images/saiapr_tc-12')
         else:
-            print('No refer dataset is called [%s]' % dataset)
+            print(('No refer dataset is called [%s]' % dataset))
             sys.exit()
 
         # load refs from data/dataset/refs(dataset).json
@@ -74,7 +74,7 @@ class REFER:
 
         # create index
         self.createIndex()
-        print('DONE (t=%.2fs)' % (time.time() - tic))
+        print(('DONE (t=%.2fs)' % (time.time() - tic)))
 
     def createIndex(self):
         # create sets of mapping
@@ -165,7 +165,7 @@ class REFER:
                 elif split == 'train' or split == 'val':
                     refs = [ref for ref in refs if ref['split'] == split]
                 else:
-                    print('No such split [%s]' % split)
+                    print(('No such split [%s]' % split))
                     sys.exit()
         ref_ids = [ref['ref_id'] for ref in refs]
         return ref_ids
@@ -197,11 +197,11 @@ class REFER:
         if not len(ref_ids) == 0:
             image_ids = list(set([self.Refs[ref_id]['image_id'] for ref_id in ref_ids]))
         else:
-            image_ids = self.Imgs.keys()
+            image_ids = list(self.Imgs.keys())
         return image_ids
 
     def getCatIds(self):
-        return self.Cats.keys()
+        return list(self.Cats.keys())
 
     def loadRefs(self, ref_ids=[]):
         if type(ref_ids) == list:
@@ -212,7 +212,7 @@ class REFER:
     def loadAnns(self, ann_ids=[]):
         if type(ann_ids) == list:
             return [self.Anns[ann_id] for ann_id in ann_ids]
-        elif type(ann_ids) == int or type(ann_ids) == unicode:
+        elif type(ann_ids) == int or type(ann_ids) == str:
             return [self.Anns[ann_ids]]
 
     def loadImgs(self, image_ids=[]):

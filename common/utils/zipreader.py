@@ -26,7 +26,7 @@ class ZipReader(object):
     def split_zip_style_path(path):
         pos_zip_at = path.index('.zip@')
         if pos_zip_at == len(path):
-            print("character '@' is not found from the given path '%s'" % (path))
+            print(("character '@' is not found from the given path '%s'" % (path)))
             assert 0
         pos_at = pos_zip_at + len('.zip@') - 1
 

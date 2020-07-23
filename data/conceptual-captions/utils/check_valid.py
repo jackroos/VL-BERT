@@ -11,4 +11,4 @@ try:
     if (im.size[0] < 10 or im.size[1] < 10 or im.size[0] > 10000 or im.size[1] > 10000):
         raise Exception('')
 except:
-    print(sys.argv[1])
+    print((sys.argv[1]))

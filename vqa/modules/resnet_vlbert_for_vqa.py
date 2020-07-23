@@ -98,7 +98,7 @@ class ResNetVLBERT(Module):
             language_pretrained = torch.load(self.language_pretrained_model_path)
             mlm_transform_state_dict = {}
             pretrain_keys = []
-            for k, v in language_pretrained.items():
+            for k, v in list(language_pretrained.items()):
                 if k.startswith('cls.predictions.transform.'):
                     pretrain_keys.append(k)
                     k_ = k[len('cls.predictions.transform.'):]
@@ -107,7 +107,7 @@ class ResNetVLBERT(Module):
                     if 'beta' in k_:
                         k_ = k_.replace('beta', 'bias')
                     mlm_transform_state_dict[k_] = v
-            print("loading pretrained classifier transform keys: {}.".format(pretrain_keys))
+            print(("loading pretrained classifier transform keys: {}.".format(pretrain_keys)))
             self.final_mlp[0].load_state_dict(mlm_transform_state_dict)
 
     def train(self, mode=True):

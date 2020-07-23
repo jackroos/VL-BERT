@@ -33,7 +33,7 @@ class ValidationMonitor(object):
                 self.best_epoch = epoch_num
                 self.best_val = v
                 logging.info('New Best Val {}: {}, Epoch: {}'.format(self.host_metric_name, self.best_val, self.best_epoch))
-                print('New Best Val {}: {}, Epoch: {}'.format(self.host_metric_name, self.best_val, self.best_epoch))
+                print(('New Best Val {}: {}, Epoch: {}'.format(self.host_metric_name, self.best_val, self.best_epoch)))
             s += "%s=%f,\t" % (n, v)
             if writer is not None:
                 writer.add_scalar(tag='Val-' + n,
@@ -43,7 +43,7 @@ class ValidationMonitor(object):
         print(s)
 
         logging.info('Best Val {}: {}, Epoch: {}'.format(self.host_metric_name, self.best_val, self.best_epoch))
-        print('Best Val {}: {}, Epoch: {}'.format(self.host_metric_name, self.best_val, self.best_epoch))
+        print(('Best Val {}: {}, Epoch: {}'.format(self.host_metric_name, self.best_val, self.best_epoch)))
 
 
 

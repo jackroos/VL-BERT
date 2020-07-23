@@ -14,7 +14,7 @@
 # limitations under the License.
 """Tokenization classes."""
 
-from __future__ import absolute_import, division, print_function, unicode_literals
+
 
 import collections
 import logging
@@ -82,7 +82,7 @@ class BertTokenizer(object):
                 "model use `tokenizer = BertTokenizer.from_pretrained(PRETRAINED_MODEL_NAME)`".format(vocab_file))
         self.vocab = load_vocab(vocab_file)
         self.ids_to_tokens = collections.OrderedDict(
-            [(ids, tok) for tok, ids in self.vocab.items()])
+            [(ids, tok) for tok, ids in list(self.vocab.items())])
         self.basic_tokenizer = BasicTokenizer(do_lower_case=do_lower_case,
                                               never_split=never_split)
         self.wordpiece_tokenizer = WordpieceTokenizer(vocab=self.vocab)
@@ -136,7 +136,7 @@ class BertTokenizer(object):
                 "We assumed '{}' was a path or url but couldn't find any file "
                 "associated to this path or url.".format(
                     pretrained_model_name_or_path,
-                    ', '.join(PRETRAINED_VOCAB_ARCHIVE_MAP.keys()),
+                    ', '.join(list(PRETRAINED_VOCAB_ARCHIVE_MAP.keys())),
                     vocab_file))
             return None
         if resolved_vocab_file == vocab_file:

@@ -205,8 +205,8 @@ class ResNet(nn.Module):
         """
         new_state_dict = self.state_dict()
         miss_keys = []
-        for k in new_state_dict.keys():
-            if k in state_dict.keys():
+        for k in list(new_state_dict.keys()):
+            if k in list(state_dict.keys()):
                 new_state_dict[k] = state_dict[k]
             else:
                 miss_keys.append(k)

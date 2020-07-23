@@ -176,17 +176,17 @@ _C.TEST.BATCH_IMAGES = 1
 def update_config(config_file):
     with open(config_file) as f:
         exp_config = edict(yaml.load(f))
-        for k, v in exp_config.items():
+        for k, v in list(exp_config.items()):
             if k in config:
                 if isinstance(v, dict):
-                    for vk, vv in v.items():
+                    for vk, vv in list(v.items()):
                         if vk in config[k]:
                             if vk == 'LR_STEP':
                                 config[k][vk] = tuple(float(s) for s in vv.split(','))
                             elif vk == 'LOSS_LOGGERS':
                                 config[k][vk] = [tuple(str(s) for s in vvi.split(',')) for vvi in vv]
                             elif vk == "VLBERT" and isinstance(vv, dict):
-                                for vvk, vvv in vv.items():
+                                for vvk, vvv in list(vv.items()):
                                     if vvk in config[k][vk]:
                                         config[k][vk][vvk] = vvv
                                     else:

@@ -182,17 +182,17 @@ def update_config(config_file):
         if isinstance(exp_config.DATASET, list):
             dataset_templ = config.DATASET
             config.DATASET = []
-        for k, v in exp_config.items():
+        for k, v in list(exp_config.items()):
             if k in config:
                 if isinstance(v, dict):
-                    for vk, vv in v.items():
+                    for vk, vv in list(v.items()):
                         if vk in config[k]:
                             if vk == 'LR_STEP':
                                 config[k][vk] = tuple(float(s) for s in vv.split(','))
                             elif vk == 'LOSS_LOGGERS':
                                 config[k][vk] = [tuple(str(s) for s in vvi.split(',')) for vvi in vv]
                             elif vk == "VLBERT" and isinstance(vv, dict):
-                                for vvk, vvv in vv.items():
+                                for vvk, vvv in list(vv.items()):
                                     if vvk in config[k][vk]:
                                         config[k][vk][vvk] = vvv
                                     else:
@@ -211,6 +211,6 @@ def update_config(config_file):
 
             if isinstance(config.DATASET, list):
                 for i, dataset_cfg in enumerate(config.DATASET):
-                    for k, v in dataset_templ.items():
+                    for k, v in list(dataset_templ.items()):
                         if k not in dataset_cfg:
                             config.DATASET[i][k] = v

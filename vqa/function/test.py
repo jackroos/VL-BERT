@@ -32,7 +32,7 @@ def test_net(args, config, ckpt_path=None, save_path=None, save_name=None):
                                              split='train')
         model_prefix = os.path.join(train_output_path, config.MODEL_PREFIX)
         ckpt_path = '{}-best.model'.format(model_prefix)
-        print('Use best checkpoint {}...'.format(ckpt_path))
+        print(('Use best checkpoint {}...'.format(ckpt_path)))
     if save_path is None:
         logger, test_output_path = create_logger(config.OUTPUT_PATH, args.cfg, config.DATASET.TEST_IMAGE_SET,
                                                  split='test')
@@ -78,5 +78,5 @@ def test_net(args, config, ckpt_path=None, save_path=None, save_name=None):
                                                                         config.DATASET.TEST_IMAGE_SET))
     with open(result_json_path, 'w') as f:
         json.dump(result, f)
-    print('result json saved to {}.'.format(result_json_path))
+    print(('result json saved to {}.'.format(result_json_path)))
     return result_json_path

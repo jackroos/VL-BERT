@@ -14,7 +14,7 @@
 # limitations under the License.
 """Convert Transformer XL checkpoint and datasets."""
 
-from __future__ import absolute_import, division, print_function
+
 
 import argparse
 import os
@@ -33,7 +33,7 @@ from external.pytorch_pretrained_bert.tokenization_transfo_xl import (CORPUS_NAM
                                                                       VOCAB_NAME)
 
 if sys.version_info[0] == 2:
-    import cPickle as pickle
+    import pickle as pickle
 else:
     import pickle
 

@@ -395,8 +395,8 @@ if __name__ == '__main__':
     inputs = torch.Tensor(S, B, H).normal_()
 
     logits, out_labels = sample_logits(embedding, bias, labels, inputs, sampler, n_sample)
-    print('logits', logits.detach().numpy().tolist())
-    print('logits shape', logits.size())
-    print('out_labels', out_labels.detach().numpy().tolist())
-    print('out_labels shape', out_labels.size())
+    print(('logits', logits.detach().numpy().tolist()))
+    print(('logits shape', logits.size()))
+    print(('out_labels', out_labels.detach().numpy().tolist()))
+    print(('out_labels shape', out_labels.size()))
 

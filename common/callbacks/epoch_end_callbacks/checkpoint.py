@@ -22,4 +22,4 @@ class Checkpoint(object):
             if save_to_best:
                 best_param_name = '{}-best.model'.format(self.prefix)
                 torch.save(checkpoint_dict, best_param_name)
-                print('Save new best model to {}.'.format(best_param_name))
+                print(('Save new best model to {}.'.format(best_param_name)))

@@ -15,7 +15,7 @@
 # limitations under the License.
 """PyTorch BERT model."""
 
-from __future__ import absolute_import, division, print_function, unicode_literals
+
 
 import copy
 import json
@@ -167,10 +167,10 @@ class BertConfig(object):
                 initializing all weight matrices.
         """
         if isinstance(vocab_size_or_config_json_file, str) or (sys.version_info[0] == 2
-                        and isinstance(vocab_size_or_config_json_file, unicode)):
+                        and isinstance(vocab_size_or_config_json_file, str)):
             with open(vocab_size_or_config_json_file, "r", encoding='utf-8') as reader:
                 json_config = json.loads(reader.read())
-            for key, value in json_config.items():
+            for key, value in list(json_config.items()):
                 self.__dict__[key] = value
         elif isinstance(vocab_size_or_config_json_file, int):
             self.vocab_size = vocab_size_or_config_json_file
@@ -192,7 +192,7 @@ class BertConfig(object):
     def from_dict(cls, json_object):
         """Constructs a `BertConfig` from a Python dictionary of parameters."""
         config = BertConfig(vocab_size_or_config_json_file=-1)
-        for key, value in json_object.items():
+        for key, value in list(json_object.items()):
             config.__dict__[key] = value
         return config
 
@@ -353,7 +353,7 @@ class BertIntermediate(nn.Module):
     def __init__(self, config):
         super(BertIntermediate, self).__init__()
         self.dense = nn.Linear(config.hidden_size, config.intermediate_size)
-        if isinstance(config.hidden_act, str) or (sys.version_info[0] == 2 and isinstance(config.hidden_act, unicode)):
+        if isinstance(config.hidden_act, str) or (sys.version_info[0] == 2 and isinstance(config.hidden_act, str)):
             self.intermediate_act_fn = ACT2FN[config.hidden_act]
         else:
             self.intermediate_act_fn = config.hidden_act
@@ -440,7 +440,7 @@ class BertPredictionHeadTransform(nn.Module):
     def __init__(self, config):
         super(BertPredictionHeadTransform, self).__init__()
         self.dense = nn.Linear(config.hidden_size, config.hidden_size)
-        if isinstance(config.hidden_act, str) or (sys.version_info[0] == 2 and isinstance(config.hidden_act, unicode)):
+        if isinstance(config.hidden_act, str) or (sys.version_info[0] == 2 and isinstance(config.hidden_act, str)):
             self.transform_act_fn = ACT2FN[config.hidden_act]
         else:
             self.transform_act_fn = config.hidden_act
@@ -574,7 +574,7 @@ class BertPreTrainedModel(nn.Module):
                 "We assumed '{}' was a path or url but couldn't find any file "
                 "associated to this path or url.".format(
                     pretrained_model_name_or_path,
-                    ', '.join(PRETRAINED_MODEL_ARCHIVE_MAP.keys()),
+                    ', '.join(list(PRETRAINED_MODEL_ARCHIVE_MAP.keys())),
                     archive_file))
             return None
         if resolved_archive_file == archive_file:
@@ -612,7 +612,7 @@ class BertPreTrainedModel(nn.Module):
         # Load from a PyTorch state_dict
         old_keys = []
         new_keys = []
-        for key in state_dict.keys():
+        for key in list(state_dict.keys()):
             new_key = None
             if 'gamma' in key:
                 new_key = key.replace('gamma', 'weight')
@@ -637,11 +637,11 @@ class BertPreTrainedModel(nn.Module):
             local_metadata = {} if metadata is None else metadata.get(prefix[:-1], {})
             module._load_from_state_dict(
                 state_dict, prefix, local_metadata, True, missing_keys, unexpected_keys, error_msgs)
-            for name, child in module._modules.items():
+            for name, child in list(module._modules.items()):
                 if child is not None:
                     load(child, prefix + name + '.')
         start_prefix = ''
-        if not hasattr(model, 'bert') and any(s.startswith('bert.') for s in state_dict.keys()):
+        if not hasattr(model, 'bert') and any(s.startswith('bert.') for s in list(state_dict.keys())):
             start_prefix = 'bert.'
         load(model, prefix=start_prefix)
         if len(missing_keys) > 0:

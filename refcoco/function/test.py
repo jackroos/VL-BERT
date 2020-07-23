@@ -86,15 +86,15 @@ def test_net(args, config):
         config.MODEL_PREFIX if args.result_name is None else args.result_name, config.DATASET.TEST_IMAGE_SET))
     with open(result_json_path, 'w') as f:
         json.dump(result, f)
-    print('result json saved to {}.'.format(result_json_path))
+    print(('result json saved to {}.'.format(result_json_path)))
 
     # evaluate (test label of refcoco+ has been released)
-    print("Evaluate on split: {}...".format(config.DATASET.TEST_IMAGE_SET))
+    print(("Evaluate on split: {}...".format(config.DATASET.TEST_IMAGE_SET)))
     pred_boxes_arr = np.array(pred_boxes)
     gt_boxes_arr = np.array([test_dataset.refer.getRefBox(ref_id=ref_id) for ref_id in ref_ids])
     gt_boxes_arr[:, [2, 3]] += gt_boxes_arr[:, [0, 1]]
     iou = cacluate_iou(pred_boxes_arr, gt_boxes_arr)
     acc = float((iou >= POSITIVE_THRESHOLD).sum() * 1.0 / iou.shape[0])
-    print("Accuracy: {}.".format(acc * 100.0))
+    print(("Accuracy: {}.".format(acc * 100.0)))
 
     return result_json_path

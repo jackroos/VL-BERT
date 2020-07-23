@@ -246,7 +246,7 @@ class VisualLinguisticBert(BaseModel):
         pooler_pretrained_state_dict = {}
         embedding_ln_pretrained_state_dict = {}
         unexpected_keys = []
-        for k, v in pretrained_state_dict.items():
+        for k, v in list(pretrained_state_dict.items()):
             if k.startswith('bert.'):
                 k = k[len('bert.'):]
             elif k.startswith('roberta.'):
@@ -302,7 +302,7 @@ class VisualLinguisticBert(BaseModel):
             else:
                 unexpected_keys.append(k)
         if len(unexpected_keys) > 0:
-            print("Warnings: Unexpected keys: {}.".format(unexpected_keys))
+            print(("Warnings: Unexpected keys: {}.".format(unexpected_keys)))
         self.embedding_LayerNorm.load_state_dict(embedding_ln_pretrained_state_dict)
         self.encoder.load_state_dict(encoder_pretrained_state_dict)
         if self.config.with_pooler and len(pooler_pretrained_state_dict) > 0:
@@ -387,7 +387,7 @@ class VisualLinguisticBertForPretraining(VisualLinguisticBert):
         relationship_head_pretrained_state_dict = {}
         mlm_head_pretrained_state_dict = {}
         unexpected_keys = []
-        for _k, v in pretrained_state_dict.items():
+        for _k, v in list(pretrained_state_dict.items()):
             if _k.startswith('bert.') or _k.startswith('roberta.'):
                 k = _k[len('bert.'):] if _k.startswith('bert.') else _k[len('roberta.'):]
                 if 'gamma' in k:
@@ -459,7 +459,7 @@ class VisualLinguisticBertForPretraining(VisualLinguisticBert):
             else:
                 unexpected_keys.append(_k)
         if len(unexpected_keys) > 0:
-            print("Warnings: Unexpected keys: {}.".format(unexpected_keys))
+            print(("Warnings: Unexpected keys: {}.".format(unexpected_keys)))
         self.embedding_LayerNorm.load_state_dict(embedding_ln_pretrained_state_dict)
         self.encoder.load_state_dict(encoder_pretrained_state_dict)
         if self.config.with_pooler and len(pooler_pretrained_state_dict) > 0:

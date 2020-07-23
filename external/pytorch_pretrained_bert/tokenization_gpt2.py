@@ -66,7 +66,7 @@ def bytes_to_unicode():
             cs.append(2**8+n)
             n += 1
     cs = [chr(n) for n in cs]
-    return dict(zip(bs, cs))
+    return dict(list(zip(bs, cs)))
 
 def get_pairs(word):
     """Return set of symbol pairs in a word.
@@ -107,7 +107,7 @@ class GPT2Tokenizer(object):
                 "We assumed '{}' was a path or url but couldn't find files {} and {} "
                 "at this path or url.".format(
                     pretrained_model_name_or_path,
-                    ', '.join(PRETRAINED_VOCAB_ARCHIVE_MAP.keys()),
+                    ', '.join(list(PRETRAINED_VOCAB_ARCHIVE_MAP.keys())),
                     pretrained_model_name_or_path,
                     vocab_file, merges_file))
             return None
@@ -131,13 +131,13 @@ class GPT2Tokenizer(object):
     def __init__(self, vocab_file, merges_file, errors='replace', max_len=None):
         self.max_len = max_len if max_len is not None else int(1e12)
         self.encoder = json.load(open(vocab_file))
-        self.decoder = {v:k for k,v in self.encoder.items()}
+        self.decoder = {v:k for k,v in list(self.encoder.items())}
         self.errors = errors # how to handle errors in decoding
         self.byte_encoder = bytes_to_unicode()
-        self.byte_decoder = {v:k for k, v in self.byte_encoder.items()}
+        self.byte_decoder = {v:k for k, v in list(self.byte_encoder.items())}
         bpe_data = open(merges_file, encoding='utf-8').read().split('\n')[1:-1]
         bpe_merges = [tuple(merge.split()) for merge in bpe_data]
-        self.bpe_ranks = dict(zip(bpe_merges, range(len(bpe_merges))))
+        self.bpe_ranks = dict(list(zip(bpe_merges, list(range(len(bpe_merges))))))
         self.cache = {}
 
         # Should haved added re.IGNORECASE so BPE merges can happen for capitalized versions of contractions

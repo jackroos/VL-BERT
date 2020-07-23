@@ -141,11 +141,11 @@ def load_tf_weights_in_transfo_xl(model, config, tf_path):
     init_vars = tf.train.list_variables(tf_path)
     tf_weights = {}
     for name, shape in init_vars:
-        print("Loading TF weight {} with shape {}".format(name, shape))
+        print(("Loading TF weight {} with shape {}".format(name, shape)))
         array = tf.train.load_variable(tf_path, name)
         tf_weights[name] = array
 
-    for name, pointer in tf_to_pt_map.items():
+    for name, pointer in list(tf_to_pt_map.items()):
         assert name in tf_weights
         array = tf_weights[name]
         # adam_v and adam_m are variables used in AdamWeightDecayOptimizer to calculated m and v
@@ -162,7 +162,7 @@ def load_tf_weights_in_transfo_xl(model, config, tf_path):
                 except AssertionError as e:
                     e.args += (p_i.shape, arr_i.shape)
                     raise
-                print("Initialize PyTorch weight {} for layer {}".format(name, i))
+                print(("Initialize PyTorch weight {} for layer {}".format(name, i)))
                 p_i.data = torch.from_numpy(arr_i)
         else:
             try:
@@ -170,13 +170,13 @@ def load_tf_weights_in_transfo_xl(model, config, tf_path):
             except AssertionError as e:
                 e.args += (pointer.shape, array.shape)
                 raise
-            print("Initialize PyTorch weight {}".format(name))
+            print(("Initialize PyTorch weight {}".format(name)))
             pointer.data = torch.from_numpy(array)
         tf_weights.pop(name, None)
         tf_weights.pop(name + '/Adam', None)
         tf_weights.pop(name + '/Adam_1', None)
 
-    print("Weights not copied to PyTorch model: {}".format(', '.join(tf_weights.keys())))
+    print(("Weights not copied to PyTorch model: {}".format(', '.join(list(tf_weights.keys())))))
     return model
 
 
@@ -246,10 +246,10 @@ class TransfoXLConfig(object):
             init_std: parameters initialized by N(0, init_std)
         """
         if isinstance(vocab_size_or_config_json_file, str) or (sys.version_info[0] == 2
-                        and isinstance(vocab_size_or_config_json_file, unicode)):
+                        and isinstance(vocab_size_or_config_json_file, str)):
             with open(vocab_size_or_config_json_file, "r", encoding='utf-8') as reader:
                 json_config = json.loads(reader.read())
-            for key, value in json_config.items():
+            for key, value in list(json_config.items()):
                 self.__dict__[key] = value
         elif isinstance(vocab_size_or_config_json_file, int):
             self.n_token = vocab_size_or_config_json_file
@@ -291,7 +291,7 @@ class TransfoXLConfig(object):
     def from_dict(cls, json_object):
         """Constructs a `TransfoXLConfig` from a Python dictionary of parameters."""
         config = TransfoXLConfig(vocab_size_or_config_json_file=-1)
-        for key, value in json_object.items():
+        for key, value in list(json_object.items()):
             config.__dict__[key] = value
         return config
 
@@ -920,7 +920,7 @@ class TransfoXLPreTrainedModel(nn.Module):
                 "We assumed '{}' was a path or url but couldn't find files {} and {} "
                 "at this path or url.".format(
                     pretrained_model_name_or_path,
-                    ', '.join(PRETRAINED_MODEL_ARCHIVE_MAP.keys()),
+                    ', '.join(list(PRETRAINED_MODEL_ARCHIVE_MAP.keys())),
                     pretrained_model_name_or_path,
                     archive_file, config_file))
             return None
@@ -956,12 +956,12 @@ class TransfoXLPreTrainedModel(nn.Module):
             local_metadata = {} if metadata is None else metadata.get(prefix[:-1], {})
             module._load_from_state_dict(
                 state_dict, prefix, local_metadata, True, missing_keys, unexpected_keys, error_msgs)
-            for name, child in module._modules.items():
+            for name, child in list(module._modules.items()):
                 if child is not None:
                     load(child, prefix + name + '.')
 
         start_prefix = ''
-        if not hasattr(model, 'transformer') and any(s.startswith('transformer.') for s in state_dict.keys()):
+        if not hasattr(model, 'transformer') and any(s.startswith('transformer.') for s in list(state_dict.keys())):
             start_prefix = 'transformer.'
         load(model, prefix=start_prefix)
 

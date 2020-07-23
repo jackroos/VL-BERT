@@ -114,7 +114,7 @@ class FastRCNN(nn.Module):
                 pretrained_model = model_zoo.load_url(model_urls['resnet{}'.format(self.num_layers)])
             else:
                 pretrained_model = torch.load(self.pretrained_model_path, map_location=lambda storage, loc: storage)
-            roi_head_feat_dict = {k[len('layer4.'):]: v for k, v in pretrained_model.items() if k.startswith('layer4.')}
+            roi_head_feat_dict = {k[len('layer4.'):]: v for k, v in list(pretrained_model.items()) if k.startswith('layer4.')}
             self.roi_head_feature_extractor.load_state_dict(roi_head_feat_dict)
             if self.output_conv5:
                 self.conv5.load_state_dict(roi_head_feat_dict)

@@ -108,7 +108,7 @@ def load_tf_weights_in_openai_gpt(model, openai_checkpoint_folder_path):
         except AssertionError as e:
             e.args += (pointer.shape, array.shape)
             raise
-        print("Initialize PyTorch weight {}".format(name))
+        print(("Initialize PyTorch weight {}".format(name)))
         pointer.data = torch.from_numpy(array)
     return model
 
@@ -167,10 +167,10 @@ class OpenAIGPTConfig(object):
                 initializing all weight matrices.
         """
         if isinstance(vocab_size_or_config_json_file, str) or (sys.version_info[0] == 2
-                        and isinstance(vocab_size_or_config_json_file, unicode)):
+                        and isinstance(vocab_size_or_config_json_file, str)):
             with open(vocab_size_or_config_json_file, "r", encoding="utf-8") as reader:
                 json_config = json.loads(reader.read())
-            for key, value in json_config.items():
+            for key, value in list(json_config.items()):
                 self.__dict__[key] = value
         elif isinstance(vocab_size_or_config_json_file, int):
             self.vocab_size = vocab_size_or_config_json_file
@@ -200,7 +200,7 @@ class OpenAIGPTConfig(object):
     def from_dict(cls, json_object):
         """Constructs a `OpenAIGPTConfig` from a Python dictionary of parameters."""
         config = OpenAIGPTConfig(vocab_size_or_config_json_file=-1)
-        for key, value in json_object.items():
+        for key, value in list(json_object.items()):
             config.__dict__[key] = value
         return config
 
@@ -451,7 +451,7 @@ class OpenAIGPTPreTrainedModel(nn.Module):
                 "Model name '{}' was not found in model name list ({}). "
                 "We assumed '{}' was a path or url but couldn't find files {} and {} "
                 "at this path or url.".format(
-                    pretrained_model_name_or_path, ", ".join(PRETRAINED_MODEL_ARCHIVE_MAP.keys()), pretrained_model_name_or_path,
+                    pretrained_model_name_or_path, ", ".join(list(PRETRAINED_MODEL_ARCHIVE_MAP.keys())), pretrained_model_name_or_path,
                     archive_file, config_file
                 )
             )
@@ -477,7 +477,7 @@ class OpenAIGPTPreTrainedModel(nn.Module):
 
         old_keys = []
         new_keys = []
-        for key in state_dict.keys():
+        for key in list(state_dict.keys()):
             new_key = None
             if key.endswith(".g"):
                 new_key = key[:-2] + ".weight"
@@ -505,12 +505,12 @@ class OpenAIGPTPreTrainedModel(nn.Module):
             module._load_from_state_dict(
                 state_dict, prefix, local_metadata, True, missing_keys, unexpected_keys, error_msgs
             )
-            for name, child in module._modules.items():
+            for name, child in list(module._modules.items()):
                 if child is not None:
                     load(child, prefix + name + ".")
 
         start_model = model
-        if hasattr(model, "transformer") and all(not s.startswith('transformer.') for s in state_dict.keys()):
+        if hasattr(model, "transformer") and all(not s.startswith('transformer.') for s in list(state_dict.keys())):
             start_model = model.transformer
         load(start_model, prefix="")
 

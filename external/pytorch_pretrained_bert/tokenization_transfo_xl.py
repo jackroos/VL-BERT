@@ -33,7 +33,7 @@ import numpy as np
 from .file_utils import cached_path
 
 if sys.version_info[0] == 2:
-    import cPickle as pickle
+    import pickle as pickle
 else:
     import pickle
 
@@ -73,7 +73,7 @@ class TransfoXLTokenizer(object):
                 "We assumed '{}' was a path or url but couldn't find files {} "
                 "at this path or url.".format(
                     pretrained_model_name_or_path,
-                    ', '.join(PRETRAINED_VOCAB_ARCHIVE_MAP.keys()),
+                    ', '.join(list(PRETRAINED_VOCAB_ARCHIVE_MAP.keys())),
                     pretrained_model_name_or_path,
                     vocab_file))
             return None
@@ -86,7 +86,7 @@ class TransfoXLTokenizer(object):
         # Instantiate tokenizer.
         tokenizer = cls(*inputs, **kwargs)
         vocab_dict = torch.load(resolved_vocab_file)
-        for key, value in vocab_dict.items():
+        for key, value in list(vocab_dict.items()):
             tokenizer.__dict__[key] = value
         return tokenizer
 
@@ -398,7 +398,7 @@ class LMShuffledIterator(object):
     def get_sent_stream(self):
         # index iterator
         epoch_indices = np.random.permutation(len(self.data)) if self.shuffle \
-            else np.array(range(len(self.data)))
+            else np.array(list(range(len(self.data))))
 
         # sentence iterator
         for idx in epoch_indices:
@@ -514,7 +514,7 @@ class TransfoXLCorpus(object):
                 "We assumed '{}' was a path or url but couldn't find files {} "
                 "at this path or url.".format(
                     pretrained_model_name_or_path,
-                    ', '.join(PRETRAINED_VOCAB_ARCHIVE_MAP.keys()),
+                    ', '.join(list(PRETRAINED_VOCAB_ARCHIVE_MAP.keys())),
                     pretrained_model_name_or_path,
                     corpus_file))
             return None
@@ -527,7 +527,7 @@ class TransfoXLCorpus(object):
         # Instantiate tokenizer.
         corpus = cls(*inputs, **kwargs)
         corpus_dict = torch.load(resolved_corpus_file)
-        for key, value in corpus_dict.items():
+        for key, value in list(corpus_dict.items()):
             corpus.__dict__[key] = value
         corpus.vocab = vocab
         if corpus.train is not None:

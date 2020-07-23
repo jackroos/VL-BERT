@@ -89,7 +89,7 @@ class ConceptualCaptionsDataset(Dataset):
             assert False, "not support aspect grouping currently!"
             self.group_ids = self.group_aspect(self.database)
 
-        print('mask_raw_pixels: ', self.mask_raw_pixels)
+        print(('mask_raw_pixels: ', self.mask_raw_pixels))
 
     @property
     def data_names(self):
@@ -123,7 +123,7 @@ class ConceptualCaptionsDataset(Dataset):
                 image = self._load_image(os.path.join(self.data_path, idb['image']))
                 w0, h0 = image.size
             except:
-                print("Failed to load image {}, use zero image!".format(idb['image']))
+                print(("Failed to load image {}, use zero image!".format(idb['image'])))
                 image = None
                 w0, h0 = frcnn_data['image_w'], frcnn_data['image_h']
 
@@ -368,7 +368,7 @@ class ConceptualCaptionsDataset(Dataset):
         group_ids[horz] = 0
         group_ids[vert] = 1
 
-        print('Done (t={:.2f}s)'.format(time.time() - t))
+        print(('Done (t={:.2f}s)'.format(time.time() - t)))
 
         return group_ids
 

@@ -34,15 +34,15 @@ def joint_validation(answer_net, rationale_net, answer_val_loader, rationale_val
 
         a_outputs = answer_net(*a_datas)
         r_outputs = rationale_net(*r_datas)
-        outputs = {'answer_' + k: v for k, v in a_outputs.items()}
-        outputs.update({'rationale_' + k: v for k, v in r_outputs.items()})
+        outputs = {'answer_' + k: v for k, v in list(a_outputs.items())}
+        outputs.update({'rationale_' + k: v for k, v in list(r_outputs.items())})
         outputs.update({'answer_label': a_label,
                         'rationale_label': r_label})
         metrics.update(outputs)
 
     if show_progress:
         from tqdm import tqdm
-        for a_batch, r_batch in tqdm(zip(answer_val_loader, rationale_val_loader)):
+        for a_batch, r_batch in tqdm(list(zip(answer_val_loader, rationale_val_loader))):
             step(a_batch, r_batch)
     else:
         for a_batch, r_batch in zip(answer_val_loader, rationale_val_loader):
