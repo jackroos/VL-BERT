@@ -6,7 +6,7 @@ numpy
 opencv-python
 pandas
 Pillow
-protobuf==3.10.0
+protobuf==3.18.3
 pycocotools
 PyYAML
 regex==2019.8.19
