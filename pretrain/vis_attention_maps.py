@@ -11,6 +11,7 @@ from pretrain.function.vis import vis_net
 def parse_args():
     parser = argparse.ArgumentParser('Visualize Attention Maps')
     parser.add_argument('--cfg', type=str, help='path to config file')
+    parser.add_argument('--gpus', type=int, nargs='+', help='indices of GPUs to use', default=[0])
     parser.add_argument('--dist', help='whether to use distributed training', default=False, action='store_true')
     parser.add_argument('--slurm', help='whether this is a slurm job', default=False, action='store_true')
     parser.add_argument('--save-dir', help='directory to save attention maps', type=str, default='./attention_maps')
@@ -19,6 +20,8 @@ def parse_args():
 
     if args.cfg is not None:
         update_config(args.cfg)
+
+    config.GPUS = ','.join([str(index) for index in args.gpus])
 
     if args.slurm:
         proc_id = int(os.environ['SLURM_PROCID'])
