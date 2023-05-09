@@ -20,14 +20,16 @@ from pretrain.modules import *
 from common.utils.create_logger import makedirsExist
 
 
+CUDA_AVAILABLE = torch.cuda.is_available()
+
+
 def vis_net(args, config, save_dir):
     pprint.pprint(config)
-    cuda_available = torch.cuda.is_available()
 
     # model = eval(config.MODULE)(config)
     model = eval(config.MODULE)(config)
     rank = None
-    if cuda_available and args.dist:
+    if CUDA_AVAILABLE and args.dist:
         local_rank = int(os.environ.get('LOCAL_RANK') or 0)
         config.GPUS = str(local_rank)
         torch.cuda.set_device(local_rank)
@@ -67,7 +69,7 @@ def vis_net(args, config, save_dir):
                                          rank=rank)
     else:
         # Model
-        if cuda_available:
+        if CUDA_AVAILABLE:
             if len(config.GPUS.split(',')) > 1:
                 # Set up data distributed parallel
                 model = torch.nn.DataParallel(
@@ -133,7 +135,7 @@ def vis(model, loader, save_dir, rank=None, world_size=1):
     model.eval()
     for i, data in zip(trange(len(loader)), loader):
     # for i, data in enumerate(loader):
-        data = to_cuda(data)
+        data = to_cuda(data) if CUDA_AVAILABLE else data
         output = model(*data)
         for _i, (attention_probs, hidden_states) in enumerate(zip(output['attention_probs'], output['hidden_states'])):
             index = int(data[2][_i][-1])
