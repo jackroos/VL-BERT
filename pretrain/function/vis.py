@@ -22,9 +22,12 @@ from common.utils.create_logger import makedirsExist
 
 def vis_net(args, config, save_dir):
     pprint.pprint(config)
+    cuda_available = torch.cuda.is_available()
 
-    if args.dist:
-        model = eval(config.MODULE)(config)
+    # model = eval(config.MODULE)(config)
+    model = eval(config.MODULE)(config)
+    rank = None
+    if cuda_available and args.dist:
         local_rank = int(os.environ.get('LOCAL_RANK') or 0)
         config.GPUS = str(local_rank)
         torch.cuda.set_device(local_rank)
@@ -43,10 +46,12 @@ def vis_net(args, config, save_dir):
                 group_name='mtorch')
         print(f'native distributed, size: {world_size}, rank: {rank}, local rank: {local_rank}')
         torch.cuda.set_device(local_rank)
+        # Model
         config.GPUS = str(local_rank)
         model = model.cuda()
         model = DDP(model, device_ids=[local_rank], output_device=local_rank)
 
+        # Loader
         if isinstance(config.DATASET, list):
             val_loaders = make_dataloaders(config,
                                            mode='val',
@@ -61,24 +66,27 @@ def vis_net(args, config, save_dir):
                                          num_replicas=world_size,
                                          rank=rank)
     else:
-        model = eval(config.MODULE)(config)
-        num_gpus = len(config.GPUS.split(','))
-        rank = None
-        # model
-        if num_gpus > 1:
-            model = torch.nn.DataParallel(model, device_ids=[int(d) for d in config.GPUS.split(',')]).cuda()
+        # Model
+        if cuda_available:
+            if len(config.GPUS.split(',')) > 1:
+                # Set up data distributed parallel
+                model = torch.nn.DataParallel(
+                    model, device_ids=[int(d) for d in config.GPUS.split(',')]
+                ).cuda()
+            else:
+                torch.cuda.set_device(int(config.GPUS))
+                model.cuda()
         else:
-            torch.cuda.set_device(int(config.GPUS))
-            model.cuda()
+            model.cpu()
 
-        # loader
+        # Loader
         if isinstance(config.DATASET, list):
             val_loaders = make_dataloaders(config, mode='val', distributed=False)
             val_loader = MultiTaskDataLoader(val_loaders)
         else:
             val_loader = make_dataloader(config, mode='val', distributed=False)
 
-    # partial load pretrain state dict
+    # Partial load pretrain state dict
     if config.NETWORK.PARTIAL_PRETRAIN != "":
         pretrain_state_dict = torch.load(config.NETWORK.PARTIAL_PRETRAIN, map_location=lambda storage, loc: storage)['state_dict']
         prefix_change = [prefix_change.split('->') for prefix_change in config.NETWORK.PARTIAL_PRETRAIN_PREFIX_CHANGES]
@@ -97,7 +105,7 @@ def vis_net(args, config, save_dir):
             pretrain_state_dict = pretrain_state_dict_parsed
         smart_partial_load_model_state_dict(model, pretrain_state_dict)
 
-    # broadcast parameter and optimizer state from rank 0 before training start
+    # Broadcast parameter and optimizer state from rank 0 before training start
     if args.dist:
         for v in model.state_dict().values():
             distributed.broadcast(v, src=0)
