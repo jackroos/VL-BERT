@@ -135,10 +135,10 @@ def vis(model, loader, save_dir, rank=None, world_size=1):
     model.eval()
     for i, data in zip(trange(len(loader)), loader):
     # for i, data in enumerate(loader):
-        data = to_cuda(data) if CUDA_AVAILABLE else data
+        data = to_cuda(data) if CUDA_AVAILABLE else list(data)
         output = model(*data)
-        for _i, (attention_probs, hidden_states) in enumerate(zip(output['attention_probs'], output['hidden_states'])):
-            index = int(data[2][_i][-1])
+        for j, (attention_probs, hidden_states) in enumerate(zip(output['attention_probs'], output['hidden_states'])):
+            index = int(data[2][j][-1])
             if hasattr(loader.dataset, 'ids'):
                 image_id = loader.dataset.ids[index]
             else:
