@@ -35,8 +35,16 @@ class ResNetVLBERT(Module):
         if language_pretrained_model_path is None:
             print("Warning: no pretrained language model found, training from scratch!!!")
 
-        self.vlbert = VisualLinguisticBert(config.NETWORK.VLBERT,
-                                         language_pretrained_model_path=language_pretrained_model_path)
+        self.vlbert = VisualLinguisticBert(
+            config.NETWORK.VLBERT,
+            language_pretrained_model_path=language_pretrained_model_path
+        )
+
+        # Freeze BERT encoder
+        if config.NETWORK.BERT_FROZEN and language_pretrained_model_path:
+            for module in self.vlbert.modules():
+                for param in module.parameters():
+                    param.requires_grad = False
 
         transform = VisualLinguisticBertMVRCHeadTransform(config.NETWORK.VLBERT)
         linear = nn.Linear(config.NETWORK.VLBERT.hidden_size, 1)
@@ -52,10 +60,18 @@ class ResNetVLBERT(Module):
         self.fix_params()
 
     def init_weight(self):
+        """
+        Initialize:
+        1. self.image_feature_extractor (Faster R-CNN)
+        2. self.object_linguistic_embeddings
+        3. self.final_mlp
+        """
         self.image_feature_extractor.init_weight()
         if self.object_linguistic_embeddings is not None:
-            self.object_linguistic_embeddings.weight.data.normal_(mean=0.0,
-                                                                  std=self.config.NETWORK.VLBERT.initializer_range)
+            self.object_linguistic_embeddings.weight.data.normal_(
+                mean=0.0,
+                std=self.config.NETWORK.VLBERT.initializer_range
+            )
         for m in self.final_mlp.modules():
             if isinstance(m, torch.nn.Linear):
                 torch.nn.init.xavier_uniform_(m.weight)
@@ -79,7 +95,7 @@ class ResNetVLBERT(Module):
                       ):
         ###########################################
 
-        # visual feature extraction
+        # Visual feature extraction
         images = image
         box_mask = (boxes[:, :, 0] > - 1.5)
         max_len = int(box_mask.sum(1).max().item())
@@ -88,15 +104,17 @@ class ResNetVLBERT(Module):
         boxes = boxes[:, :max_len]
         label = label[:, :max_len]
 
-        obj_reps = self.image_feature_extractor(images=images,
-                                                boxes=boxes,
-                                                box_mask=box_mask,
-                                                im_info=im_info,
-                                                classes=None,
-                                                segms=None)
+        obj_reps = self.image_feature_extractor(
+            images=images,
+            boxes=boxes,
+            box_mask=box_mask,
+            im_info=im_info,
+            classes=None,
+            segms=None
+        )
 
         ############################################
-        # prepare text
+        # Prepare text
         cls_id, sep_id = self.tokenizer.convert_tokens_to_ids(['[CLS]', '[SEP]'])
         text_input_ids = expression.new_zeros((expression.shape[0], expression.shape[1] + 2))
         text_input_ids[:, 0] = cls_id
@@ -117,25 +135,27 @@ class ResNetVLBERT(Module):
 
         # Visual Linguistic BERT
 
-        hidden_states_text, hidden_states_regions, _ = self.vlbert(text_input_ids,
-                                                                 text_token_type_ids,
-                                                                 text_visual_embeddings,
-                                                                 text_mask,
-                                                                 object_vl_embeddings,
-                                                                 box_mask,
-                                                                 output_all_encoded_layers=False,
-                                                                 output_text_and_object_separately=True)
+        hidden_states_text, hidden_states_regions, _ = self.vlbert(
+            text_input_ids,
+            text_token_type_ids,
+            text_visual_embeddings,
+            text_mask,
+            object_vl_embeddings,
+            box_mask,
+            output_all_encoded_layers=False,
+            output_text_and_object_separately=True
+        )
 
         ###########################################
         outputs = {}
 
-        # classifier
+        # Classifier
         logits = self.final_mlp(hidden_states_regions).squeeze(-1)
 
-        # loss
+        # Loss
         cls_loss = F.binary_cross_entropy_with_logits(logits[box_mask], label[box_mask])
 
-        # pad back to origin len for compatibility with DataParallel
+        # Pad back to origin len for compatibility with DataParallel
         logits_ = logits.new_zeros((logits.shape[0], origin_len)).fill_(-10000.0)
         logits_[:, :logits.shape[1]] = logits
         logits = logits_
@@ -159,7 +179,7 @@ class ResNetVLBERT(Module):
 
         ###########################################
 
-        # visual feature extraction
+        # Visual feature extraction
         images = image
         box_mask = (boxes[:, :, 0] > - 1.5)
         max_len = int(box_mask.sum(1).max().item())
@@ -167,15 +187,17 @@ class ResNetVLBERT(Module):
         box_mask = box_mask[:, :max_len]
         boxes = boxes[:, :max_len]
 
-        obj_reps = self.image_feature_extractor(images=images,
-                                                boxes=boxes,
-                                                box_mask=box_mask,
-                                                im_info=im_info,
-                                                classes=None,
-                                                segms=None)
+        obj_reps = self.image_feature_extractor(
+            images=images,
+            boxes=boxes,
+            box_mask=box_mask,
+            im_info=im_info,
+            classes=None,
+            segms=None
+        )
 
         ############################################
-        # prepare text
+        # Prepare text
         cls_id, sep_id = self.tokenizer.convert_tokens_to_ids(['[CLS]', '[SEP]'])
         text_input_ids = expression.new_zeros((expression.shape[0], expression.shape[1] + 2))
         text_input_ids[:, 0] = cls_id
@@ -196,22 +218,24 @@ class ResNetVLBERT(Module):
 
         # Visual Linguistic BERT
 
-        hidden_states_text, hidden_states_regions, _ = self.vlbert(text_input_ids,
-                                                                 text_token_type_ids,
-                                                                 text_visual_embeddings,
-                                                                 text_mask,
-                                                                 object_vl_embeddings,
-                                                                 box_mask,
-                                                                 output_all_encoded_layers=False,
-                                                                 output_text_and_object_separately=True)
+        hidden_states_text, hidden_states_regions, _ = self.vlbert(
+            text_input_ids,
+            text_token_type_ids,
+            text_visual_embeddings,
+            text_mask,
+            object_vl_embeddings,
+            box_mask,
+            output_all_encoded_layers=False,
+            output_text_and_object_separately=True
+        )
 
         ###########################################
         outputs = {}
 
-        # classifier
+        # Classifier
         logits = self.final_mlp(hidden_states_regions).squeeze(-1)
 
-        # pad back to origin len for compatibility with DataParallel
+        # Pad back to origin len for compatibility with DataParallel
         logits_ = logits.new_zeros((logits.shape[0], origin_len)).fill_(-10000.0)
         logits_[:, :logits.shape[1]] = logits
         logits = logits_
