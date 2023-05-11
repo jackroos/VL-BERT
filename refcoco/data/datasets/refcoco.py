@@ -313,7 +313,7 @@ class RefCOCO(Dataset):
         # group
         group_ids = torch.zeros(len(database))
         horz = widths >= heights
-        vert = 1 - horz
+        vert = ~horz  # 1 - horz
         group_ids[horz] = 0
         group_ids[vert] = 1
 
