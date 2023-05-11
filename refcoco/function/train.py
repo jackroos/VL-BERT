@@ -70,6 +70,8 @@ def train_net(args, config):
 
     # model = eval(config.MODULE)(config)
     model = eval(config.MODULE)(config)
+    num_gpus = len(config.GPUS.split(','))
+    world_size = 1
     rank = None
 
     if CUDA_AVAILABLE and args.dist:
@@ -109,7 +111,7 @@ def train_net(args, config):
 
         writer = None
         if args.log_dir is not None:
-            tb_log_dir = os.path.join(args.log_dir, 'rank{}'.format(rank))
+            tb_log_dir = os.path.join(args.log_dir, f"rank{rank}")
             if not os.path.exists(tb_log_dir):
                 os.makedirs(tb_log_dir)
             writer = SummaryWriter(log_dir=tb_log_dir)
@@ -163,21 +165,21 @@ def train_net(args, config):
         # total_gpus = world_size
 
     else:
+        writer = (
+            SummaryWriter(log_dir=args.log_dir)
+            if args.log_dir is not None else None
+        )
+        summary_parameters(model, logger)
+        shutil.copy(args.cfg, final_output_path)
+        shutil.copy(inspect.getfile(eval(config.MODULE)), final_output_path)
+
         if CUDA_AVAILABLE:
             # os.environ['CUDA_VISIBLE_DEVICES'] = config.GPUS
-            summary_parameters(model, logger)
-            shutil.copy(args.cfg, final_output_path)
-            shutil.copy(inspect.getfile(eval(config.MODULE)), final_output_path)
-            num_gpus = len(config.GPUS.split(','))
             assert num_gpus <= 1 or (not config.TRAIN.FP16), (
                 "Not support fp16 with torch.nn.DataParallel. "
                 "Please use amp.parallel.DistributedDataParallel instead."
             )
             # total_gpus = num_gpus
-            writer = (
-                SummaryWriter(log_dir=args.log_dir)
-                if args.log_dir is not None else None
-            )
 
             # Model
             if num_gpus > 1:
@@ -259,23 +261,23 @@ def train_net(args, config):
     # Metrics
     train_metrics_list = [
         refcoco_metrics.RefAccuracy(allreduce=args.dist,
-                                    num_replicas=world_size if args.dist else 1),
+                                    num_replicas=world_size),
         refcoco_metrics.ClsAccuracy(allreduce=args.dist,
-                                    num_replicas=world_size if args.dist else 1),
+                                    num_replicas=world_size),
         refcoco_metrics.ClsPosAccuracy(allreduce=args.dist,
-                                       num_replicas=world_size if args.dist else 1),
+                                       num_replicas=world_size),
         refcoco_metrics.ClsPosFraction(allreduce=args.dist,
-                                       num_replicas=world_size if args.dist else 1),
+                                       num_replicas=world_size),
     ]
     val_metrics_list = [
         refcoco_metrics.RefAccuracy(allreduce=args.dist,
-                                    num_replicas=world_size if args.dist else 1)
+                                    num_replicas=world_size)
     ]
     for output_name, display_name in config.TRAIN.LOSS_LOGGERS:
         train_metrics_list.append(
             refcoco_metrics.LossLogger(
                 output_name, display_name=display_name, allreduce=args.dist,
-                num_replicas=world_size if args.dist else 1)
+                num_replicas=world_size)
         )
 
     train_metrics = CompositeEvalMetric()
