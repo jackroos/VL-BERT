@@ -68,7 +68,8 @@ def coordinate_embeddings(boxes, dim):
 def bbox_iou_py_vectorized(boxes, query_boxes):
     n_ = boxes.shape[0]
     k_ = query_boxes.shape[0]
-    n_mesh, k_mesh = torch.meshgrid([torch.arange(n_), torch.arange(k_)])
+    n_mesh, k_mesh = torch.meshgrid([torch.arange(n_), torch.arange(k_)],
+                                    indexing='ij')
     n_mesh = n_mesh.contiguous().view(-1)
     k_mesh = k_mesh.contiguous().view(-1)
     boxes = boxes[n_mesh]

@@ -200,8 +200,12 @@ class VisualLinguisticBert(BaseModel):
         bs = text_vl_embeddings.size(0)
         vl_embed_size = text_vl_embeddings.size(-1)
         max_length = (text_mask.sum(1) + object_mask.sum(1)).max() + 1
-        grid_ind, grid_pos = torch.meshgrid(torch.arange(bs, dtype=torch.long, device=text_vl_embeddings.device),
-                                            torch.arange(max_length, dtype=torch.long, device=text_vl_embeddings.device))
+        grid_ind, grid_pos = torch.meshgrid(
+            torch.arange(bs, dtype=torch.long, device=text_vl_embeddings.device),
+            torch.arange(max_length, dtype=torch.long,
+                         device=text_vl_embeddings.device),
+            indexing='ij'
+        )
         text_end = text_mask.sum(1, keepdim=True)
         object_end = text_end + object_mask.sum(1, keepdim=True)
 

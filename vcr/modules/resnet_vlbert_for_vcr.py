@@ -145,9 +145,12 @@ class ResNetVLBERT(Module):
         input_mask = torch.ones((batch_size, num_choices, max_len), dtype=torch.uint8, device=question.device)
         input_type_ids = torch.zeros((batch_size, num_choices, max_len), dtype=question.dtype, device=question.device)
         text_tags = input_type_ids.new_zeros((batch_size, num_choices, max_len))
-        grid_i, grid_j, grid_k = torch.meshgrid(torch.arange(batch_size, device=question.device),
-                                                torch.arange(num_choices, device=question.device),
-                                                torch.arange(max_len, device=question.device))
+        grid_i, grid_j, grid_k = torch.meshgrid(
+            torch.arange(batch_size, device=question.device),
+            torch.arange(num_choices, device=question.device),
+            torch.arange(max_len, device=question.device),
+            indexing='ij'
+        )
 
         input_mask[grid_k > a_end] = 0
         input_type_ids[(grid_k > q_end) & (grid_k <= a_end)] = 1
@@ -176,9 +179,12 @@ class ResNetVLBERT(Module):
         input_mask = torch.ones((batch_size, num_choices, max_len), dtype=torch.uint8, device=question.device)
         input_type_ids = torch.zeros((batch_size, num_choices, max_len), dtype=question.dtype, device=question.device)
         text_tags = input_type_ids.new_zeros((batch_size, num_choices, max_len))
-        grid_i, grid_j, grid_k = torch.meshgrid(torch.arange(batch_size, device=question.device),
-                                                torch.arange(num_choices, device=question.device),
-                                                torch.arange(max_len, device=question.device))
+        grid_i, grid_j, grid_k = torch.meshgrid(
+            torch.arange(batch_size, device=question.device),
+            torch.arange(num_choices, device=question.device),
+            torch.arange(max_len, device=question.device),
+            indexing='ij'
+        )
 
         input_mask[grid_k > a_end] = 0
         q_input_mask = (grid_k > 0) & (grid_k < q_end)
@@ -205,9 +211,12 @@ class ResNetVLBERT(Module):
         input_mask = torch.ones((batch_size, num_choices, max_len), dtype=torch.uint8, device=question.device)
         input_type_ids = torch.zeros((batch_size, num_choices, max_len), dtype=question.dtype, device=question.device)
         text_tags = input_type_ids.new_zeros((batch_size, num_choices, max_len))
-        grid_i, grid_j, grid_k = torch.meshgrid(torch.arange(batch_size, device=question.device),
-                                                torch.arange(num_choices, device=question.device),
-                                                torch.arange(max_len, device=question.device))
+        grid_i, grid_j, grid_k = torch.meshgrid(
+            torch.arange(batch_size, device=question.device),
+            torch.arange(num_choices, device=question.device),
+            torch.arange(max_len, device=question.device),
+            indexing='ij'
+        )
 
         input_mask[grid_k > q_end] = 0
         input_type_ids[(grid_k > a_end) & (grid_k <= q_end)] = 1
@@ -347,8 +356,11 @@ class ResNetVLBERT(Module):
 
         # loss
         if self.config.NETWORK.CLASSIFIER_SIGMOID:
-            _, choice_ind = torch.meshgrid(torch.arange(logits.shape[0], device=logits.device),
-                                           torch.arange(num_choices, device=logits.device))
+            _, choice_ind = torch.meshgrid(
+                torch.arange(logits.shape[0], device=logits.device),
+                torch.arange(num_choices, device=logits.device),
+                indexing='ij'
+            )
             label_binary = (choice_ind == answer_label.unsqueeze(1))
             if mask_type is not None and self.config.NETWORK.REPLACE_OBJECT_CHANGE_LABEL:
                 label_binary = label_binary * (mask_type != 1).unsqueeze(1)

@@ -149,8 +149,11 @@ class ResNetVLBERT(Module):
         input_mask = torch.ones((batch_size, max_len), dtype=torch.uint8, device=question.device)
         input_type_ids = torch.zeros((batch_size, max_len), dtype=question.dtype, device=question.device)
         text_tags = input_type_ids.new_zeros((batch_size, max_len))
-        grid_i, grid_j = torch.meshgrid(torch.arange(batch_size, device=question.device),
-                                        torch.arange(max_len, device=question.device))
+        grid_i, grid_j = torch.meshgrid(
+            torch.arange(batch_size, device=question.device),
+            torch.arange(max_len, device=question.device),
+            indexing='ij'
+        )
 
         input_mask[grid_j > a_end] = 0
         input_type_ids[(grid_j > q_end) & (grid_j <= a_end)] = 1
