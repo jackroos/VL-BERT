@@ -10,6 +10,10 @@ except ImportError:
     pass
     #raise ImportError("Please install apex from https://www.github.com/nvidia/apex if you want to use fp16.")
 
+
+CUDA_AVAILABLE = torch.cuda.is_available()
+
+
 # Parameter to pass to batch_end_callback
 BatchEndParam = namedtuple('BatchEndParams',
                            ['epoch',
@@ -107,7 +111,7 @@ def train(net,
 
             # transfer data to GPU
             data_transfer_time = time.time()
-            batch = to_cuda(batch)
+            batch = to_cuda(batch) if CUDA_AVAILABLE else list(batch)
             data_transfer_time = time.time() - data_transfer_time
 
             # forward
