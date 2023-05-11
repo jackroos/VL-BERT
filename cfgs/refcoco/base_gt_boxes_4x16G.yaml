@@ -54,6 +54,8 @@ NETWORK:
   IMAGE_FROZEN_BACKBONE_STAGES:
   - 1
   - 2
+  - 3
+  - 4
   IMAGE_FROZEN_BN: true
   IMAGE_FINAL_DIM: 768
   IMAGE_SEMANTIC: false
@@ -61,7 +63,7 @@ NETWORK:
   BERT_MODEL_NAME: './model/pretrained_model/bert-base-uncased'
   BERT_PRETRAINED: ''
   BERT_PRETRAINED_EPOCH: 0
-  BERT_FROZEN: false
+  BERT_FROZEN: true
   ENABLE_CNN_REG_LOSS: false
 
   VLBERT:
@@ -92,7 +94,7 @@ TRAIN:
   RESUME: false
   AUTO_RESUME: true
   BEGIN_EPOCH: 0
-  END_EPOCH: 20
+  END_EPOCH: 1  # 20
   OPTIMIZER: 'AdamW'
   CLIP_GRAD_NORM: 1.0
   GRAD_ACCUMULATE_STEPS: 2

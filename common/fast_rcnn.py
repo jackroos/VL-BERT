@@ -18,9 +18,8 @@ class FastRCNN(nn.Module):
     def __init__(self, config, average_pool=True, final_dim=768, enable_cnn_reg_loss=False):
         """
         :param config:
-        :param average_pool: whether or not to average pool the representations
+        :param average_pool: whether to average pool the representations or not
         :param final_dim:
-        :param is_train:
         """
         super(FastRCNN, self).__init__()
         self.average_pool = average_pool
