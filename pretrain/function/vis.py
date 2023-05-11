@@ -28,7 +28,9 @@ def vis_net(args, config, save_dir):
 
     # model = eval(config.MODULE)(config)
     model = eval(config.MODULE)(config)
+    world_size = 1
     rank = None
+
     if CUDA_AVAILABLE and args.dist:
         local_rank = int(os.environ.get('LOCAL_RANK') or 0)
         config.GPUS = str(local_rank)
@@ -46,7 +48,8 @@ def vis_net(args, config, save_dir):
                 world_size=world_size,
                 rank=rank,
                 group_name='mtorch')
-        print(f'native distributed, size: {world_size}, rank: {rank}, local rank: {local_rank}')
+        print(f"native distributed, size: {world_size}, rank: {rank},"
+              f" local rank: {local_rank}")
         torch.cuda.set_device(local_rank)
         # Model
         config.GPUS = str(local_rank)
@@ -90,8 +93,14 @@ def vis_net(args, config, save_dir):
 
     # Partial load pretrain state dict
     if config.NETWORK.PARTIAL_PRETRAIN != "":
-        pretrain_state_dict = torch.load(config.NETWORK.PARTIAL_PRETRAIN, map_location=lambda storage, loc: storage)['state_dict']
-        prefix_change = [prefix_change.split('->') for prefix_change in config.NETWORK.PARTIAL_PRETRAIN_PREFIX_CHANGES]
+        pretrain_state_dict = torch.load(
+            config.NETWORK.PARTIAL_PRETRAIN,
+            map_location=lambda storage, loc: storage
+        )['state_dict']
+        prefix_change = [
+            prefix_change.split('->') for prefix_change
+            in config.NETWORK.PARTIAL_PRETRAIN_PREFIX_CHANGES
+        ]
         if len(prefix_change) > 0:
             pretrain_state_dict_parsed = {}
             for k, v in pretrain_state_dict.items():
@@ -146,7 +155,7 @@ def vis(model, loader, save_dir, rank=None, world_size=1):
             attention_probs_arr = attention_probs.detach().cpu().numpy()
             hidden_states_arr = hidden_states.detach().cpu().numpy()
             cos_similarity_arr = (hidden_states @ hidden_states.transpose(1, 2)).detach().cpu().numpy()
-            np.save(os.path.join(attention_dir, '{}.npy'.format(image_id)), attention_probs_arr)
+            np.save(os.path.join(attention_dir, f"{image_id}.npy"), attention_probs_arr)
             # np.save(os.path.join(hidden_dir, '{}.npy'.format(image_id)), hidden_states_arr)
             # np.save(os.path.join(cos_dir, '{}.npy'.format(image_id)), cos_similarity_arr)
             # index = (index + 1) % len(loader.dataset)
