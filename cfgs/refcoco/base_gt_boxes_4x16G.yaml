@@ -1,6 +1,6 @@
 ---
 RNG_SEED: 12345
-OUTPUT_PATH: './output/vl-bert/refcoco+'
+OUTPUT_PATH: 'output/refcoco+/{timestamp}'
 MODULE: ResNetVLBERT
 GPUS: '0,1'
 LOG_FREQUENT: 100

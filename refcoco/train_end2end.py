@@ -1,18 +1,26 @@
 import _init_paths
-import os
 import argparse
-import torch
+import os
 import subprocess
+
+from datetime import datetime
+from os import path as osp
+
+import torch
 
 from refcoco.function.config import config, update_config
 from refcoco.function.train import train_net
 from refcoco.function.test import test_net
 
 
+FORMAT_TIMESTAMP = '%Y-%m-%d-%H-%M-%S'
+now = datetime.now
+
+
 def parse_args():
     parser = argparse.ArgumentParser('Train Cognition Network')
     parser.add_argument('--cfg', type=str, help='path to config file')
-    parser.add_argument('--model-dir', type=str, help='root path to store checkpoint')
+    parser.add_argument('--model-dir', type=str, default='', help='root path to store checkpoint')
     parser.add_argument('--log-dir', type=str, help='tensorboard log dir')
     parser.add_argument('--dist', help='whether to use distributed training', default=False, action='store_true')
     parser.add_argument('--slurm', help='whether this is a slurm job', default=False, action='store_true')
@@ -27,8 +35,10 @@ def parse_args():
 
     if args.cfg is not None:
         update_config(args.cfg)
-    if args.model_dir is not None:
-        config.OUTPUT_PATH = os.path.join(args.model_dir, config.OUTPUT_PATH)
+    # if args.model_dir is not None:
+    config.OUTPUT_PATH = osp.join(
+        args.model_dir, *(config.OUTPUT_PATH.split('/'))
+    ).replace('{timestamp}', now().strftime(FORMAT_TIMESTAMP))
 
     if args.partial_pretrain is not None:
         config.NETWORK.PARTIAL_PRETRAIN = args.partial_pretrain
