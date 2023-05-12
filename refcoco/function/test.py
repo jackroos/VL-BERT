@@ -80,7 +80,7 @@ def test_net(args, config):
     # for nbatch, batch in tqdm(enumerate(test_loader)):
         bs = test_loader.batch_sampler.batch_size if test_loader.batch_sampler is not None else test_loader.batch_size
         ref_ids.extend([test_database[id]['ref_id'] for id in range(cur_id, min(cur_id + bs, len(test_database)))])
-        batch = to_cuda(batch)
+        batch = to_cuda(batch) if CUDA_AVAILABLE else list(batch)
         output = model(*batch)
         pred_boxes.extend(output['pred_boxes'].detach().cpu().tolist())
         cur_id += bs
