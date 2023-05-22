@@ -10,7 +10,7 @@ protobuf==3.10.0
 pycocotools
 PyYAML
 regex==2019.8.19
-requests==2.22.0
+requests==2.31.0
 scikit-image
 scipy
 tensorboard
